@@ -49,7 +49,12 @@ import {
 import type { WorldNode } from "./dungeon-world"
 import "./dungeon-explorer.css"
 
-const DungeonLiveWorld = dynamic(() => import("./dungeon-live-world"), {\n  ssr: false,\n  loading: () => <div className="ld-webgl-fallback">Opening the Moonwake observatory…</div>,\n})\n\nconst DungeonWorld = dynamic(() => import("./dungeon-world"), {
+const DungeonLiveWorld = dynamic(() => import("./dungeon-live-world"), {
+  ssr: false,
+  loading: () => <div className="ld-webgl-fallback">Opening the Moonwake observatory…</div>,
+})
+
+const DungeonWorld = dynamic(() => import("./dungeon-world"), {
   ssr: false,
   loading: () => <div className="ld-webgl-fallback">Loading the pixel realm…</div>,
 })
@@ -287,7 +292,9 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
           </div>
         </header>
 
-        <DungeonLiveWorld />\n\n        {showChronicle && (
+        <DungeonLiveWorld />
+
+        {showChronicle && (
           <section className="ld-chronicle-panel" aria-label="Campaign chronicle">
             <div className="ld-chronicle-intro">
               <div className="ld-panel-kicker">THE CHRONICLE OF ASTER</div>
