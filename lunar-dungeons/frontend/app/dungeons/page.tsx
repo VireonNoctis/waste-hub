@@ -3,7 +3,7 @@ import DungeonExplorer from "@/components/dungeons/dungeon-explorer"
 
 export const metadata: Metadata = {
   title: "Explore Dungeons | Lunar",
-  description: "Explore five pixel realms, clear 800 dungeon stages, and unlock Infinity.",
+  description: "Uncover five story chapters, explore 800 pixel-art chambers, and descend into Infinity.",
 }
 
 export default function DungeonsPage() {

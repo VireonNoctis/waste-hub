@@ -9,7 +9,10 @@ A self-contained Next.js + Three.js + Rust dungeon feature bundle with an expand
 - Every 20th standard stage is a boss room, placed at the end of every second sector.
 - The Three.js atlas uses a wider, winding chamber route, tiled stone floors, room walls, corridor stones, rune details, torches, and ruined annex architecture. The annexes are atmospheric scenery, not extra reward rooms or unlockable stages.
 - Clearing stage 800 unlocks Infinity. Each Infinity victory advances the player's saved depth; every tenth depth is a boss encounter.
-- Players choose one of three server-validated actions per turn: Arc Strike, Moon Guard, or Star Pulse.
+- Players choose from four server-validated actions: Arc Strike, Moon Guard, Star Pulse, and Lantern Focus (a limited-turn heal).
+- Five original story acts unfold across the realms, with a Chronicle, companion dialogue, restored memory fragments, and a final ending after stage 800.
+- Each realm has its own layered pixel-art environment; bosses telegraph charged attacks and awaken at half health.
+- Infinity encounters cycle through five server-calculated environmental affixes that alter enemy strength.
 - The Rust API owns stage unlocks, battle health, enemy health, turn resolution, boss selection, and completion state. The browser only displays the result.
 - There is no reward/currency implementation. A server-confirmed victory is exposed through `DungeonExplorer`'s `onVictory` callback for the separate rewards integration.
 
@@ -96,3 +99,10 @@ cargo clippy -- -D warnings
 ```
 
 The container used to assemble this bundle did not include the Rust toolchain or Lunar's full repository/dependencies, so the Rust binary and an integrated Next.js build could not be run here. Run the checks above in the project environment before deploying.
+
+
+## Campaign expansion
+
+The campaign is an original gothic-fantasy story set in Aster, built around five realm chapters and the mystery of the broken Moonheart. The Chronicle panel in the dungeon UI reveals each chapter as its realm opens, then restores its memory fragment when that realm is cleared. The visual direction uses layered, high-contrast pixel scenery and distinct palettes for each tier without reusing another game's characters, maps, or art assets.
+
+Combat now includes Lantern Focus, a server-validated recovery action. Boss state is also server-derived: wardens enter an awakened phase below half health and signal their next charged strike. Infinity adds a rotating environmental affix every five depths; the server adjusts enemy stats and reports the active affix to the client.

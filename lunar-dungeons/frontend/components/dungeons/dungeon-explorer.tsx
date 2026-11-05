@@ -7,11 +7,13 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowRight,
+  BookOpen,
   Check,
   ChevronDown,
   CircleHelp,
   Crown,
   Flame,
+  HeartPulse,
   Lock,
   Map,
   RotateCcw,
@@ -29,6 +31,9 @@ import {
   takeDungeonTurn,
 } from "@/lib/dungeons/api"
 import {
+  DUNGEON_CHRONICLE,
+  DUNGEON_ENDING,
+  DUNGEON_PROLOGUE,
   DUNGEON_TIERS,
   MAP_PAGE_SIZE,
   MAP_PAGES_PER_TIER,
@@ -100,6 +105,7 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [showRules, setShowRules] = useState(false)
+  const [showChronicle, setShowChronicle] = useState(false)
 
   const currentTier = DUNGEON_TIERS[Math.min(4, selectedTier)]
   const currentRange = formatTierProgress(currentTier, progress)
@@ -124,6 +130,8 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
   const selectedIsCompleted = selectedStage <= progress.completedLevel
   const currentTierProgress = formatTierProgress(currentTier, progress)
   const currentSectorName = currentTier.chapters[mapPage]
+  const currentChronicle = DUNGEON_CHRONICLE[Math.min(DUNGEON_CHRONICLE.length - 1, selectedTier)]
+  const battleTier = battle?.mode === "standard" ? Math.min(5, Math.floor((battle.stage - 1) / STAGES_PER_TIER) + 1) : 5
   const tierStartUnlocked = currentTierProgress.start <= progress.highestUnlockedLevel
   const currentPageStart = currentRange.start + mapPage * MAP_PAGE_SIZE
   const currentPageEnd = Math.min(currentPageStart + MAP_PAGE_SIZE - 1, currentRange.end)
@@ -255,10 +263,16 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
               <p className="ld-eyebrow">THE OLD WORLD IS CALLING</p>
               <h1>Explore Dungeons</h1>
               <p className="ld-subtitle">A pixel-bound journey through 800 stages and beyond.</p>
+              <p className="ld-current-chapter"><span>CHAPTER 0{currentChronicle.id}</span> {currentChronicle.title}</p>
             </div>
-            <button className="ld-help-button" onClick={() => setShowRules((value) => !value)} aria-expanded={showRules}>
-              <CircleHelp size={16} /> How it works <ChevronDown size={14} className={showRules ? "ld-rotate" : ""} />
-            </button>
+            <div className="ld-header-actions">
+              <button className="ld-help-button" onClick={() => setShowChronicle((value) => !value)} aria-expanded={showChronicle}>
+                <BookOpen size={16} /> Chronicle <ChevronDown size={14} className={showChronicle ? "ld-rotate" : ""} />
+              </button>
+              <button className="ld-help-button" onClick={() => setShowRules((value) => !value)} aria-expanded={showRules}>
+                <CircleHelp size={16} /> How it works <ChevronDown size={14} className={showRules ? "ld-rotate" : ""} />
+              </button>
+            </div>
           </div>
           {showRules && (
             <div className="ld-rules-panel">
@@ -273,7 +287,48 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
           </div>
         </header>
 
-        {error && <div className="ld-alert" role="alert"><span>{error}</span><button onClick={() => setError(null)} aria-label="Dismiss error"><X size={15} /></button></div>}
+        {showChronicle && (
+          <section className="ld-chronicle-panel" aria-label="Campaign chronicle">
+            <div className="ld-chronicle-intro">
+              <div className="ld-panel-kicker">THE CHRONICLE OF ASTER</div>
+              <h2>Five notes. One forgotten moon.</h2>
+              <p>{DUNGEON_PROLOGUE}</p>
+            </div>
+            <div className="ld-chronicle-grid">
+              {DUNGEON_CHRONICLE.map((chapter) => {
+                const unlocked = progress.highestUnlockedLevel >= chapter.startStage
+                const restored = progress.completedLevel >= chapter.endStage
+                return (
+                  <article key={chapter.id} className={`ld-chronicle-card ${restored ? "is-restored" : ""} ${!unlocked ? "is-sealed" : ""}`}>
+                    <div className="ld-chronicle-card-top">
+                      <span>ACT 0{chapter.id} · {chapter.region.toUpperCase()}</span>
+                      <strong>{restored ? "MEMORY RESTORED" : unlocked ? "DISCOVERED" : "SEALED"}</strong>
+                    </div>
+                    <h3>{unlocked ? chapter.title : "A chapter beyond the mist"}</h3>
+                    <p>{unlocked ? chapter.summary : "Reach this realm to uncover the next part of the story."}</p>
+                    {unlocked && <div className="ld-chronicle-guide">GUIDE · {chapter.companion}</div>}
+                    {restored && (
+                      <div className="ld-memory-fragment">
+                        <span><BookOpen size={12} /> MEMORY RESTORED · {chapter.memoryTitle}</span>
+                        <p>{chapter.revelation}</p>
+                        <blockquote>“{chapter.memoryText}”</blockquote>
+                      </div>
+                    )}
+                  </article>
+                )
+              })}
+            </div>
+            {progress.completedLevel >= TOTAL_STAGES && (
+              <div className="ld-chronicle-ending">
+                <div className="ld-panel-kicker">THE FIFTH NOTE · TRUE ENDING</div>
+                <h3>The Moon Remembers</h3>
+                <p>{DUNGEON_ENDING}</p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {error && <div className="ld-alert" role="alert"><span>{error}</span><button onClick={() => setError(null)} aria-label="Dismiss error"><X size={15} /></button></div> role="alert"><span>{error}</span><button onClick={() => setError(null)} aria-label="Dismiss error"><X size={15} /></button></div>}
         {notice && (!battle || battle.status !== "active") && <div className="ld-notice"><Check size={16} /> {notice}</div>}
 
         {loading ? (
@@ -282,13 +337,22 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
           <section className="ld-battle-layout">
             <div className="ld-battle-art">
               <div className="ld-battle-topline"><span>ACTIVE ENCOUNTER</span><span>{battle.mode === "infinity" ? `INFINITY · DEPTH ${battle.depth}` : stageLabel(battle.stage)}</span></div>
-              <div className="ld-battle-scene">
+              <div className="ld-battle-scene" data-tier={battleTier}>
                 <div className="ld-battle-stars" />
                 <div className="ld-player-sprite"><span>✦</span><i /></div>
                 <div className={`ld-enemy-sprite ${battle.enemy.boss ? "is-boss" : ""}`}><span>{battle.enemy.boss ? "♛" : "◈"}</span><i /></div>
                 <div className="ld-ground-line" />
                 <div className="ld-fight-caption"><span>TURN {battle.turn}</span><b>{battle.enemy.name}</b></div>
               </div>
+              {battle.enemy.boss && (
+                <div className={`ld-boss-state ${battle.enemy.telegraph ? "is-charged" : ""}`}>
+                  <span>{battle.enemy.phase === "awakened" ? "AWAKENED PHASE" : "SEALED PHASE"}</span>
+                  <strong>{battle.enemy.telegraph ? "CHARGED STRIKE · DEFEND OR PREPARE" : "WATCH THE WARDEN'S PATTERN"}</strong>
+                </div>
+              )}
+              {battle.enemy.modifier && (
+                <div className="ld-infinity-affix"><span>INFINITY AFFINITY</span><strong>{battle.enemy.modifier}</strong></div>
+              )}
               <div className="ld-battle-vitals">
                 <HealthBar label="YOUR VITALITY" health={battle.player} />
                 <HealthBar label={battle.enemy.name.toUpperCase()} health={battle.enemy} enemy />
@@ -311,6 +375,9 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
                   </button>
                   <button className="ld-action-button" onClick={() => void act("guard")} disabled={busy}>
                     <span className="ld-action-icon"><Shield size={19} /></span><span><strong>Moon Guard</strong><small>Reduce the next incoming hit</small></span><ArrowRight size={16} />
+                  </button>
+                  <button className="ld-action-button is-focus" onClick={() => void act("focus")} disabled={busy || battle.player.hp >= battle.player.maxHp}>
+                    <span className="ld-action-icon"><HeartPulse size={19} /></span><span><strong>Lantern Focus</strong><small>Restore up to 24 vitality · the enemy still acts</small></span><ArrowRight size={16} />
                   </button>
                   <button className="ld-action-button is-pulse" onClick={() => void act("pulse")} disabled={busy || battle.pulseCooldown > 0}>
                     <span className="ld-action-icon"><Zap size={19} /></span><span><strong>Star Pulse</strong><small>{battle.pulseCooldown > 0 ? `Recharging · ${battle.pulseCooldown} turn` : "A stronger burst · recharge after use"}</small></span><ArrowRight size={16} />
@@ -396,7 +463,7 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
                     </div>
                   </div>
                   <div className="ld-map-window" style={{ "--tier-color": currentTier.color, "--tier-glow": currentTier.glow } as CSSProperties}>
-                    <DungeonWorld nodes={nodes} color={currentTier.color} glow={currentTier.glow} />
+                    <DungeonWorld nodes={nodes} color={currentTier.color} glow={currentTier.glow} tier={currentTier.id} />
                     <div className="ld-map-overlay">
                       {nodes.map((node) => (
                         <button

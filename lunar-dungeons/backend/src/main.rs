@@ -85,6 +85,9 @@ struct EnemyView {
     hp: i64,
     max_hp: i64,
     boss: bool,
+    phase: Option<String>,
+    telegraph: bool,
+    modifier: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -287,6 +290,9 @@ fn battle_view(row: AttemptRow) -> BattleView {
             hp: row.enemy_hp.max(0),
             max_hp: row.enemy_hp_max,
             boss: row.is_boss != 0,
+            phase: boss_phase(row.is_boss, row.enemy_hp, row.enemy_hp_max),
+            telegraph: boss_telegraph(row.is_boss, row.turn),
+            modifier: infinity_modifier(&row.mode, row.depth).map(str::to_string),
         },
         status: row.status,
         pulse_cooldown: row.pulse_cooldown,
@@ -317,9 +323,56 @@ fn enemy_profile(mode: &str, stage: i64, depth: i64) -> (String, bool, i64, i64)
     } else {
         names[tier][(stage.saturating_add(depth).unsigned_abs() as usize) % 3].to_string()
     };
-    let hp = 60 + scale / 4 + (tier as i64 * 10) + if boss { 75 } else { 0 };
-    let power = 6 + (tier as i64 * 2) + scale / 250 + if boss { 4 } else { 0 };
+    let (modifier_hp, modifier_power) = infinity_modifier_bonus(mode, depth);
+    let hp = 60 + scale / 4 + (tier as i64 * 10) + if boss { 75 } else { 0 } + modifier_hp;
+    let power = 6 + (tier as i64 * 2) + scale / 250 + if boss { 4 } else { 0 } + modifier_power;
     (name, boss, hp, power)
+}
+
+fn boss_phase(is_boss: i64, enemy_hp: i64, enemy_hp_max: i64) -> Option<String> {
+    if is_boss == 0 {
+        None
+    } else if enemy_hp.saturating_mul(2) <= enemy_hp_max {
+        Some("awakened".to_string())
+    } else {
+        Some("sealed".to_string())
+    }
+}
+
+fn boss_telegraph(is_boss: i64, turn: i64) -> bool {
+    is_boss != 0 && turn.saturating_add(1) % 4 == 0
+}
+
+fn infinity_modifier(mode: &str, depth: i64) -> Option<&'static str> {
+    if mode != "infinity" {
+        return None;
+    }
+
+    Some(match depth.saturating_sub(1).rem_euclid(5) {
+        0 => "Echoing Halls",
+        1 => "Hollow Tide",
+        2 => "Falling Ash",
+        3 => "Fractured Gravity",
+        _ => "Withered Light",
+    })
+}
+
+fn infinity_modifier_bonus(mode: &str, depth: i64) -> (i64, i64) {
+    if mode != "infinity" {
+        return (0, 0);
+    }
+
+    match depth.saturating_sub(1).rem_euclid(5) {
+        0 => (18, 0),
+        1 => (0, 3),
+        2 => (8, 2),
+        3 => (26, 0),
+        _ => (0, 4),
+    }
+}
+
+fn focus_recovery(current_hp: i64) -> i64 {
+    (PLAYER_MAX_HP - current_hp).clamp(0, 24)
 }
 
 fn seed_from_uuid(id: &Uuid) -> i64 {
@@ -434,7 +487,7 @@ async fn take_turn(
     Json(body): Json<ActionRequest>,
 ) -> ApiResult<Json<TurnResponse>> {
     let user_id = authenticate(&headers, &state)?;
-    if !matches!(body.action.as_str(), "strike" | "guard" | "pulse") {
+    if !matches!(body.action.as_str(), "strike" | "guard" | "pulse" | "focus") {
         return Err(ApiError::new(StatusCode::BAD_REQUEST, "Choose a valid dungeon action."));
     }
 
@@ -480,6 +533,11 @@ async fn take_turn(
             let damage = base_damage * 2 + random_bonus;
             (damage, format!("Star Pulse bursts for {damage} vitality damage."))
         }
+        "focus" => {
+            let recovered = focus_recovery(player_hp);
+            player_hp += recovered;
+            (0, format!("Lantern Focus restores {recovered} vitality."))
+        }
         _ => unreachable!(),
     };
 
@@ -491,11 +549,19 @@ async fn take_turn(
         status = "won".to_string();
     } else {
         let heavy_turn = turn % 4 == 0;
-        let raw_damage = row.enemy_power + next_roll(&mut seed, 6) + if heavy_turn { 7 } else { 0 };
+        let awakened = row.is_boss != 0 && enemy_hp.saturating_mul(2) <= row.enemy_hp_max;
+        let raw_damage = row.enemy_power
+            + next_roll(&mut seed, 6)
+            + if heavy_turn { 7 } else { 0 }
+            + if awakened { 5 } else { 0 };
         let incoming = if guarding { (raw_damage + 2) / 3 } else { raw_damage };
         player_hp = (player_hp - incoming).max(0);
         enemy_text = Some(if guarding {
             format!("Your Moon Guard absorbs most of the wave. You lose {incoming} vitality.")
+        } else if row.is_boss != 0 && heavy_turn && awakened {
+            format!("{} unleashes an awakened strike for {incoming} vitality.", row.enemy_name)
+        } else if row.is_boss != 0 && heavy_turn {
+            format!("{} gathers a crushing blow for {incoming} vitality.", row.enemy_name)
         } else if heavy_turn {
             format!("A charged wave reaches you for {incoming} vitality.")
         } else {
@@ -690,6 +756,26 @@ mod tests {
         assert!(!enemy_profile("infinity", 801, 1).1);
         assert!(enemy_profile("infinity", 801, 10).1);
         assert!(enemy_profile("infinity", 801, 20).1);
+    }
+
+    #[test]
+    fn bosses_awaken_below_half_health_and_telegraph_heavy_turns() {
+        assert_eq!(boss_phase(1, 60, 100).as_deref(), Some("sealed"));
+        assert_eq!(boss_phase(1, 50, 100).as_deref(), Some("awakened"));
+        assert_eq!(boss_phase(0, 1, 100), None);
+        assert!(boss_telegraph(1, 3));
+        assert!(!boss_telegraph(1, 2));
+        assert!(!boss_telegraph(0, 3));
+    }
+
+    #[test]
+    fn infinity_affixes_cycle_and_focus_has_a_fixed_cap() {
+        assert_eq!(infinity_modifier("infinity", 1), Some("Echoing Halls"));
+        assert_eq!(infinity_modifier("infinity", 6), Some("Echoing Halls"));
+        assert_eq!(infinity_modifier("standard", 1), None);
+        assert_eq!(focus_recovery(150), 0);
+        assert_eq!(focus_recovery(140), 10);
+        assert_eq!(focus_recovery(80), 24);
     }
 
     #[test]

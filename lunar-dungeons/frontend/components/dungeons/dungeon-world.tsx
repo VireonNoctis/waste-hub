@@ -15,11 +15,21 @@ interface DungeonWorldProps {
   nodes: WorldNode[]
   color: string
   glow: string
+  tier: number
 }
 
-function PixelGround({ color }: { color: string }) {
+const BIOME_PALETTES: Record<number, { background: string; fog: string; tiles: string[]; wall: string; floor: string; silhouette: string; dust: string }> = {
+  1: { background: "#0b1714", fog: "#142820", tiles: ["#14251f", "#1b3026", "#20392d", "#172a24", "#294335"], wall: "#526d5a", floor: "#20392c", silhouette: "#101f1b", dust: "#9bd59a" },
+  2: { background: "#1b100e", fog: "#351a18", tiles: ["#241715", "#38201b", "#49251c", "#2d1c19", "#522b20"], wall: "#80513c", floor: "#3b241c", silhouette: "#221513", dust: "#ffad70" },
+  3: { background: "#0d1822", fog: "#182c3d", tiles: ["#172633", "#1b3040", "#233b4c", "#182b38", "#2a4556"], wall: "#587d96", floor: "#213746", silhouette: "#142330", dust: "#a8ddff" },
+  4: { background: "#171226", fog: "#2a1e42", tiles: ["#211a32", "#2b2140", "#34274d", "#241c38", "#3c2d55"], wall: "#7663a0", floor: "#2d2542", silhouette: "#1d1730", dust: "#d0b0ff" },
+  5: { background: "#160f1b", fog: "#2b172d", tiles: ["#211523", "#2b192e", "#351d37", "#241727", "#40213d"], wall: "#82516e", floor: "#2d1d31", silhouette: "#1c1222", dust: "#ff9fd0" },
+}
+
+function PixelGround({ color, tier }: { color: string; tier: number }) {
+  const palette = BIOME_PALETTES[tier] ?? BIOME_PALETTES[1]
   const tiles = useMemo(() => {
-    const shades = ["#17252b", "#1a2b31", "#203238", "#1a292f", "#24383d"]
+    const shades = palette.tiles
     return Array.from({ length: 392 }, (_, index) => {
       const col = (index % 28) - 13.5
       const row = Math.floor(index / 28) - 6.5
@@ -33,13 +43,13 @@ function PixelGround({ color }: { color: string }) {
         opacity: 0.58 + ((index * 13) % 31) / 100,
       }
     })
-  }, [])
+  }, [tier])
 
   return (
     <group>
       <mesh position={[0, 0, -2]}>
         <planeGeometry args={[30, 15]} />
-        <meshBasicMaterial color="#101b20" />
+        <meshBasicMaterial color={palette.background} />
       </mesh>
       {tiles.map((tile) => (
         <mesh key={tile.key} position={[tile.x, tile.y, tile.z]}>
@@ -54,7 +64,80 @@ function PixelGround({ color }: { color: string }) {
           rotation={[0, 0, (index % 4) * Math.PI / 4]}
         >
           <boxGeometry args={[0.11 + (index % 3) * 0.04, 0.11 + (index % 4) * 0.03, 0.08]} />
-          <meshBasicMaterial color={index % 3 === 0 ? color : "#344950"} transparent opacity={0.3} />
+          <meshBasicMaterial color={index % 3 === 0 ? color : palette.dust} transparent opacity={0.3} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+
+
+function BiomeScenery({ tier, color }: { tier: number; color: string }) {
+  const palette = BIOME_PALETTES[tier] ?? BIOME_PALETTES[1]
+  const landmarks = useMemo(() => Array.from({ length: 18 }, (_, index) => ({
+    key: index,
+    x: -14 + (index % 9) * 3.5,
+    y: index < 9 ? 5.5 : -5.2,
+    height: 1.6 + ((index * 7) % 5) * 0.55,
+    width: 0.24 + (index % 3) * 0.12,
+  })), [tier])
+  const motes = useMemo(() => Array.from({ length: 42 }, (_, index) => ({
+    key: index,
+    x: -13.5 + ((index * 19) % 270) / 10,
+    y: -6 + ((index * 31) % 120) / 10,
+    z: -1.2 + (index % 4) * 0.025,
+    size: 0.035 + (index % 3) * 0.025,
+  })), [tier])
+
+  return (
+    <group>
+      <mesh position={[0, 0, -2.15]}>
+        <planeGeometry args={[30, 15]} />
+        <meshBasicMaterial color={palette.fog} transparent opacity={0.42} />
+      </mesh>
+      {landmarks.map((landmark) => (
+        <group key={landmark.key} position={[landmark.x, landmark.y, -1.78]}>
+          <mesh>
+            <boxGeometry args={[landmark.width, landmark.height, 0.22]} />
+            <meshBasicMaterial color={palette.silhouette} transparent opacity={0.86} />
+          </mesh>
+          {tier === 1 && (
+            <mesh position={[0.38, -0.32, 0.02]} rotation={[0, 0, 0.28]}>
+              <boxGeometry args={[0.13, landmark.height * 0.55, 0.12]} />
+              <meshBasicMaterial color={palette.silhouette} />
+            </mesh>
+          )}
+          {tier === 2 && (
+            <mesh position={[0, -landmark.height / 2, 0.08]}>
+              <boxGeometry args={[landmark.width * 1.8, 0.08, 0.08]} />
+              <meshBasicMaterial color={color} transparent opacity={0.32} />
+            </mesh>
+          )}
+          {tier === 3 && (
+            <mesh position={[0, landmark.height / 2 + 0.48, 0.04]}>
+              <coneGeometry args={[0.38, 1.05, 4]} />
+              <meshBasicMaterial color={palette.wall} transparent opacity={0.66} />
+            </mesh>
+          )}
+          {tier === 4 && (
+            <mesh position={[0, 0.45, 0.04]} rotation={[0.7, 0.2, 0.2]}>
+              <torusGeometry args={[0.48, 0.035, 3, 8]} />
+              <meshBasicMaterial color={palette.dust} transparent opacity={0.34} />
+            </mesh>
+          )}
+          {tier === 5 && (
+            <mesh position={[0.38, 0.4, 0.08]} rotation={[0.3, 0.4, 0.5]}>
+              <boxGeometry args={[0.2, 0.72, 0.18]} />
+              <meshBasicMaterial color={palette.wall} transparent opacity={0.62} />
+            </mesh>
+          )}
+        </group>
+      ))}
+      {motes.map((mote) => (
+        <mesh key={mote.key} position={[mote.x, mote.y, mote.z]}>
+          <boxGeometry args={[mote.size, mote.size, 0.04]} />
+          <meshBasicMaterial color={palette.dust} transparent opacity={0.18 + (mote.key % 4) * 0.08} />
         </mesh>
       ))}
     </group>
@@ -99,14 +182,15 @@ function Route({ nodes, glow }: { nodes: WorldNode[]; glow: string }) {
   )
 }
 
-function RoomArchitecture({ nodes, color, glow }: { nodes: WorldNode[]; color: string; glow: string }) {
+function RoomArchitecture({ nodes, color, glow, tier }: { nodes: WorldNode[]; color: string; glow: string; tier: number }) {
+  const palette = BIOME_PALETTES[tier] ?? BIOME_PALETTES[1]
   return (
     <group>
       {nodes.map((node) => {
         const width = node.boss ? 3.15 : 2.35
         const height = node.boss ? 2.85 : 2.1
-        const wall = node.status === "locked" ? "#334348" : "#526a65"
-        const floor = node.status === "locked" ? "#1c292e" : "#263b3b"
+        const wall = node.status === "locked" ? "#334348" : palette.wall
+        const floor = node.status === "locked" ? "#1c292e" : palette.floor
         return (
           <group key={`room-${node.stage}`} position={[node.x, node.y, -0.15]}>
             <mesh position={[0, 0, -0.28]}>
@@ -221,7 +305,7 @@ function RuinedAnnexes({ color }: { color: string }) {
   )
 }
 
-export default function DungeonWorld({ nodes, color, glow }: DungeonWorldProps) {
+export default function DungeonWorld({ nodes, color, glow, tier }: DungeonWorldProps) {
   return (
     <Canvas
       orthographic
@@ -230,11 +314,12 @@ export default function DungeonWorld({ nodes, color, glow }: DungeonWorldProps) 
       gl={{ antialias: false, powerPreference: "high-performance", alpha: false }}
       fallback={<div className="ld-webgl-fallback">3D rendering is unavailable. Use the stage route below.</div>}
     >
-      <color attach="background" args={["#101b20"]} />
-      <PixelGround color={color} />
+      <color attach="background" args={[(BIOME_PALETTES[tier] ?? BIOME_PALETTES[1]).background]} />
+      <BiomeScenery tier={tier} color={color} />
+      <PixelGround color={color} tier={tier} />
       <RuinedAnnexes color={color} />
       <Route nodes={nodes} glow={glow} />
-      <RoomArchitecture nodes={nodes} color={color} glow={glow} />
+      <RoomArchitecture nodes={nodes} color={color} glow={glow} tier={tier} />
       <StagePedestals nodes={nodes} color={color} />
       <mesh position={[0, 0, -0.8]}>
         <planeGeometry args={[30, 0.025]} />
