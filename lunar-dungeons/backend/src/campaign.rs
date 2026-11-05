@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, time::{SystemTime, UNIX_EPOCH}};
 
 use axum::{Json, Router, extract::State, http::HeaderMap, routing::{get, post}};
 use serde::{Deserialize, Serialize};
@@ -34,6 +34,15 @@ impl Default for CampaignSettings {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct ActiveBoss {
+    id: String,
+    hp: i64,
+    max_hp: i64,
+    last_hit_at: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
 struct CampaignState {
     current_room: String,
     checkpoint_room: String,
@@ -46,6 +55,7 @@ struct CampaignState {
     quest_choices: BTreeMap<String, String>,
     companion_affinity: i64,
     ending: Option<String>,
+    active_boss: Option<ActiveBoss>,
     settings: CampaignSettings,
 }
 
@@ -63,6 +73,7 @@ impl Default for CampaignState {
             quest_choices: BTreeMap::new(),
             companion_affinity: 0,
             ending: None,
+            active_boss: None,
             settings: CampaignSettings::default(),
         }
     }
@@ -144,6 +155,30 @@ fn room_for_boss(boss: &str) -> Option<&'static str> {
         "astral_warden" => Some("astral_first_star"),
         "orin_first_keeper" => Some("quiet_moonheart"),
         "eclipse_warden" => Some("moonwake_underlight"),
+        _ => None,
+    }
+}
+
+fn boss_max_hp(boss: &str) -> i64 {
+    match boss {
+        "verdant_colossus" => 190,
+        "ember_sovereign" => 220,
+        "hollow_monarch" => 250,
+        "astral_warden" => 280,
+        "orin_first_keeper" => 330,
+        "eclipse_warden" => 300,
+        _ => 0,
+    }
+}
+
+fn boss_for_room(room: &str) -> Option<&'static str> {
+    match room {
+        "mosslight_briar_well" => Some("verdant_colossus"),
+        "ember_last_hearth" => Some("ember_sovereign"),
+        "frost_hushed_throne" => Some("hollow_monarch"),
+        "astral_first_star" => Some("astral_warden"),
+        "quiet_moonheart" => Some("orin_first_keeper"),
+        "moonwake_underlight" => Some("eclipse_warden"),
         _ => None,
     }
 }
@@ -295,9 +330,25 @@ async fn update_campaign(
                 return Err(ApiError::new(axum::http::StatusCode::FORBIDDEN, "That gate is still sealed. Complete the previous realm's warden first."));
             }
             campaign.current_room = room.to_string();
+            campaign.active_boss = boss_for_room(room)
+                .filter(|boss| !campaign.bosses_defeated.iter().any(|defeated| defeated == boss))
+                .map(|boss| ActiveBoss {
+                    id: boss.to_string(),
+                    hp: boss_max_hp(boss),
+                    max_hp: boss_max_hp(boss),
+                    last_hit_at: 0,
+                });
         }
         "respawn" => {
             campaign.current_room = campaign.checkpoint_room.clone();
+            campaign.active_boss = boss_for_room(&campaign.current_room)
+                .filter(|boss| !campaign.bosses_defeated.iter().any(|defeated| defeated == boss))
+                .map(|boss| ActiveBoss {
+                    id: boss.to_string(),
+                    hp: boss_max_hp(boss),
+                    max_hp: boss_max_hp(boss),
+                    last_hit_at: 0,
+                });
         }
         "checkpoint" => {
             let room = event.room_id.as_deref().unwrap_or_default();
@@ -362,18 +413,30 @@ async fn update_campaign(
                 campaign.companion_affinity = (campaign.companion_affinity + if first_choice { 1 } else { 0 }).clamp(-5, 10);
             }
         }
-        "boss" => {
+        "boss-hit" => {
             let boss = event.key.as_deref().unwrap_or_default();
             let boss_room = room_for_boss(boss).ok_or_else(|| ApiError::new(axum::http::StatusCode::BAD_REQUEST, "Unknown warden."))?;
             if campaign.current_room != boss_room {
                 return Err(ApiError::new(axum::http::StatusCode::FORBIDDEN, "The warden is not in your current room."));
             }
-            if !campaign.bosses_defeated.iter().any(|item| item == boss) {
-                campaign.bosses_defeated.push(boss.to_string());
+            let active = campaign.active_boss.as_mut()
+                .filter(|active| active.id == boss)
+                .ok_or_else(|| ApiError::new(axum::http::StatusCode::CONFLICT, "There is no active warden encounter."))?;
+            let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as i64;
+            if now.saturating_sub(active.last_hit_at) < 150 {
+                return Err(ApiError::new(axum::http::StatusCode::TOO_MANY_REQUESTS, "Let the lantern strike settle before attacking again."));
             }
-            if let Some(ability) = ability_for_boss(boss) {
-                if !campaign.unlocked_abilities.iter().any(|item| item == ability) {
-                    campaign.unlocked_abilities.push(ability.to_string());
+            active.last_hit_at = now;
+            active.hp = (active.hp - 23).max(0);
+            if active.hp == 0 {
+                campaign.active_boss = None;
+                if !campaign.bosses_defeated.iter().any(|item| item == boss) {
+                    campaign.bosses_defeated.push(boss.to_string());
+                }
+                if let Some(ability) = ability_for_boss(boss) {
+                    if !campaign.unlocked_abilities.iter().any(|item| item == ability) {
+                        campaign.unlocked_abilities.push(ability.to_string());
+                    }
                 }
             }
         }
