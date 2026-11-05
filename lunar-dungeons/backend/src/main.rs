@@ -277,6 +277,9 @@ fn battle_view(row: AttemptRow) -> BattleView {
         player,
         enemy: row.last_enemy_text,
     });
+    let phase = boss_phase(row.is_boss, row.enemy_hp, row.enemy_hp_max);
+    let telegraph = boss_telegraph(row.is_boss, row.turn);
+    let modifier = infinity_modifier(&row.mode, row.depth).map(|value| value.to_string());
 
     BattleView {
         attempt_id: row.attempt_id,
@@ -290,9 +293,9 @@ fn battle_view(row: AttemptRow) -> BattleView {
             hp: row.enemy_hp.max(0),
             max_hp: row.enemy_hp_max,
             boss: row.is_boss != 0,
-            phase: boss_phase(row.is_boss, row.enemy_hp, row.enemy_hp_max),
-            telegraph: boss_telegraph(row.is_boss, row.turn),
-            modifier: infinity_modifier(&row.mode, row.depth).map(str::to_string),
+            phase,
+            telegraph,
+            modifier,
         },
         status: row.status,
         pulse_cooldown: row.pulse_cooldown,
