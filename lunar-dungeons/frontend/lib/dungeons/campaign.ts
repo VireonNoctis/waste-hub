@@ -21,6 +21,7 @@ export interface CampaignBoss {\n  id: string\n  hp: number\n  maxHp: number\n}\
   questChoices: Record<string, string>
   companionAffinity: number
   ending: string | null
+  activeBoss: CampaignBoss | null
   settings: AccessibilitySettings
 }
 
