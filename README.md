@@ -1,16 +1,21 @@
 # Lunar — Explore Dungeons
 
-Expanded Next.js, Three.js, and Rust dungeon feature bundle for Lunar.
+Source code for Lunar's pixel-style dungeon exploration feature.
 
-The complete feature source is included in **[lunar-dungeons-expanded.zip](./lunar-dungeons-expanded.zip)**. Unpack the archive to get the `lunar-dungeons/` directory, then follow `lunar-dungeons/README.md` for setup and integration.
+## Source
 
-## What's included
-- Five themed tiers, 16 named sectors per tier, and 10 chambers per sector (800 stages).
-- Expanded pixel-style Three.js atlas with winding chambers, corridors, room architecture, rune details, and ruined annex scenery.
-- Boss encounter every 20 standard stages.
-- Endless Infinity mode after stage 800.
-- Next.js App Router UI and API proxy.
-- Rust/Axum/SQLx backend with authenticated, server-owned progression and turn resolution.
-- No rewards implementation; victory callback remains the integration boundary for the separate rewards developer.
+- Feature setup and integration: [lunar-dungeons/README.md](./lunar-dungeons/README.md)
+- Rust backend: [lunar-dungeons/backend](./lunar-dungeons/backend/)
+- Next.js page and API proxy: [lunar-dungeons/frontend/app](./lunar-dungeons/frontend/app/)
+- Three.js scene and explorer: [lunar-dungeons/frontend/components/dungeons](./lunar-dungeons/frontend/components/dungeons/)
+- Frontend API and contracts: [lunar-dungeons/frontend/lib/dungeons](./lunar-dungeons/frontend/lib/dungeons/)
 
-The archive's README includes configuration, authentication assumptions, API routes, and verification commands.
+## Feature scope
+
+- Five tiers, 16 sectors per tier, and 10 chambers per sector: 800 standard stages.
+- Boss encounters and Infinity progression after stage 800.
+- Next.js App Router frontend with a Three.js pixel-style dungeon world.
+- Rust/Axum/SQLx backend for authenticated progression and server-validated combat.
+- Rewards are intentionally left to the separate rewards integration.
+
+See lunar-dungeons/README.md for setup, configuration, authentication assumptions, API routes, and verification commands.
