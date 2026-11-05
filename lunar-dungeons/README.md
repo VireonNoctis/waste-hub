@@ -1,6 +1,6 @@
 # Lunar — Explore Dungeons
 
-A self-contained Next.js + Three.js + Rust dungeon feature bundle with an expanded 80-sector pixel atlas. It is designed to be dropped into the Lunar App Router project without changing the supplied player or community-guidelines pages.
+A self-contained Next.js + Three.js + Rust dungeon feature bundle for Lunar: a real-time side-scrolling campaign set in Moonwake, plus the original 800-stage atlas and Infinity descent. It is designed to be dropped into the Lunar App Router project without changing the supplied player or community-guidelines pages.
 
 ## Massive dungeon atlas
 
@@ -10,7 +10,13 @@ A self-contained Next.js + Three.js + Rust dungeon feature bundle with an expand
 - The Three.js atlas uses a wider, winding chamber route, tiled stone floors, room walls, corridor stones, rune details, torches, and ruined annex architecture. The annexes are atmospheric scenery, not extra reward rooms or unlockable stages.
 - Clearing stage 800 unlocks Infinity. Each Infinity victory advances the player's saved depth; every tenth depth is a boss encounter.
 - Players choose from four server-validated actions: Arc Strike, Moon Guard, Star Pulse, and Lantern Focus (a limited-turn heal).
-- Five original story acts unfold across the realms, with a Chronicle, companion dialogue, restored memory fragments, and a final ending after stage 800.
+- The original five-act story now follows the Moonwake Testament: the Lumen, the Quiet, Orin the First Keeper, Iri/Auralis, and the five lunar notes.
+- The real-time campaign has a connected 17-room world: Moonwake Observatory, five linked kingdoms, and the hidden Underlight room. A separate side-scrolling player controller supports jumping, dash, wall-jump, double-jump, grapple, melee attacks, and camera-follow.
+- Four movement arts unlock from four realm wardens. Later gates require the relevant art; the Underlight requires five hidden fragments.
+- NPC companion quests record choices and companion trust. Lore tablets, secrets, a bestiary, shrine checkpoints, a hidden boss, and three alternate endings are included.
+- Accessibility settings include remappable keyboard controls, touch controls, reduced motion, camera-shake control, high-contrast tells, and shape-coded telegraphs.
+- Rust persists campaign progress and validates room adjacency, region gates, checkpoint/lore/secret/bestiary/quest events, boss encounter hits, ability unlocks, ending choices, and accessibility settings.
+- The real-time physics and moment-to-moment non-boss combat simulation run in the browser for responsiveness. Rust validates campaign transitions and boss encounter progress; it does not simulate every frame of platform physics.
 - Each realm has its own layered pixel-art environment; bosses telegraph charged attacks and awaken at half health.
 - Infinity encounters cycle through five server-calculated environmental affixes that alter enemy strength.
 - The Rust API owns stage unlocks, battle health, enemy health, turn resolution, boss selection, and completion state. The browser only displays the result.
@@ -76,7 +82,9 @@ All gameplay routes are authenticated and user-scoped:
 |---|---|---|
 | `GET` | `/api/dungeons/state` | Load progress and any active attempt |
 | `POST` | `/api/dungeons/attempts` | Start/reopen a standard stage or Infinity run |
-| `POST` | `/api/dungeons/attempts/:id/turn` | Submit `strike`, `guard`, or `pulse` |
+| `POST` | `/api/dungeons/attempts/:id/turn` | Submit `strike`, `guard`, `pulse`, or `focus` |
+| `GET` | `/api/dungeons/campaign` | Load Moonwake campaign, discoveries, checkpoints, quests, and settings |
+| `POST` | `/api/dungeons/campaign/event` | Persist a validated room, shrine, lore, secret, bestiary, quest, boss-hit, ending, respawn, or settings event |
 | `DELETE` | `/api/dungeons/attempts/:id` | Abandon an active attempt |
 
 Standard start body: `{"mode":"standard","level":1}`. Infinity start body: `{"mode":"infinity"}`. Turn body: `{"action":"strike"}`. The API refuses locked stages and refuses Infinity until stage 800 is completed.
@@ -103,6 +111,22 @@ The container used to assemble this bundle did not include the Rust toolchain or
 
 ## Campaign expansion
 
-The campaign is an original gothic-fantasy story set in Aster, built around five realm chapters and the mystery of the broken Moonheart. The Chronicle panel in the dungeon UI reveals each chapter as its realm opens, then restores its memory fragment when that realm is cleared. The visual direction uses layered, high-contrast pixel scenery and distinct palettes for each tier without reusing another game's characters, maps, or art assets.
+The campaign is an original moonlit fantasy set in Moonwake: a silver observatory city built around the Lumen, a light that remembers every name. When the Quiet begins erasing memory, Orin the First Keeper divides the Lumen into five lunar notes and hides them across five kingdoms. The Wayfarer wakes beneath the observatory with a lantern that has no flame. Iri, a moth archivist whose forgotten name is Auralis, leads the journey. Each chapter reframes one of the wardens from enemy to guardian, until the final choice decides whether the light belongs to one keeper, a few companions, or everyone.
 
-Combat now includes Lantern Focus, a server-validated recovery action. Boss state is also server-derived: wardens enter an awakened phase below half health and signal their next charged strike. Infinity adds a rotating environmental affix every five depths; the server adjusts enemy stats and reports the active affix to the client.
+The atlas combat retains Lantern Focus, server-derived boss phases, and Infinity affixes. The new Moonwake campaign is an additional real-time 2.5D platforming mode; its player physics and moment-to-moment non-boss enemy simulation run client-side, while campaign progress and boss health hits are recorded and validated by Rust. Boss rooms telegraph distinct attack lanes and change patterns at half health.
+
+
+## 6. Real-time Moonwake campaign
+
+The dungeons page now opens with a side-scrolling Moonwake world. Move with the current key bindings (A/D by default), jump with Space, strike with J, interact with E, and use K/G after those movement arts unlock. Touch devices receive an on-screen control row. Room entrances are connected; the backend refuses jumps to non-adjacent or still-sealed regions.
+
+The route is:
+
+- Moonwake Observatory → Mosslight Wilds → Ember Hollow → Frostglass Vale → Astral Archive → Quiet Beyond.
+- Defeating the first four wardens unlocks dash, wall-jump, double-jump, and grapple in that order.
+- Five secret fragments open the Underlight beneath the observatory, where the Unwritten Warden waits.
+- Shrine attunement saves a return room. Death returns the player to the last shrine.
+- Six companion conversations track choices and trust. Lore tablets and creature encounters fill the Chronicle and Bestiary.
+- Defeating Orin opens three final choices: Shared Light, Quiet Keeper, or Open Sky.
+
+The real-time platform physics and ordinary enemy encounters are client-simulated for responsive controls. Rust persists the campaign and validates connected room changes, realm gates, lore/secret/bestiary locations, quest choices, shrines, and boss encounter hits. The server does not run a frame-by-frame physics simulation. The original 800-stage atlas remains beneath the new campaign, with its existing onVictory reward handoff untouched.
