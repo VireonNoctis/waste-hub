@@ -284,7 +284,11 @@ function LiveScene({
   }, [room.id, room.spawn, room.enemy, enemyEnabled, serverBossHp])
 
   useFrame((state, rawDelta) => {
-    if (paused) return
+    if (paused) {
+      inputRef.current.held.clear()
+      inputRef.current.pressed.clear()
+      return
+    }
     const dt = Math.min(rawDelta, 0.035)
     const p = game.current
     const input = inputRef.current
