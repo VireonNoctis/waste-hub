@@ -801,6 +801,7 @@ export default function DungeonLiveWorld() {
     try {
       const next = await applyEvent({ action: "room", roomId: target })
       setRoomId(next.currentRoom)
+      setShowMap(false)
       setHud(EMPTY_HUD)
       setToast("Entered " + (WORLD_ROOM_BY_ID[target]?.title ?? "a new room") + ".")
       setPaused(false)
@@ -925,6 +926,7 @@ export default function DungeonLiveWorld() {
               const isCurrent = entry.id === roomId
               const canTravel = !!exit && gateReady
               const cleared = entry.enemy?.kind === "boss" && !!campaign?.bossesDefeated.includes(entry.enemy.id)
+              const visited = !!campaign?.visitedRooms.includes(entry.id)
               const sealed = entry.region === "underlight" ? (campaign?.discoveredSecrets.length ?? 0) < 5
                 : entry.region === "ember" ? !campaign?.bossesDefeated.includes("verdant_colossus")
                   : entry.region === "frost" ? !campaign?.bossesDefeated.includes("ember_sovereign")
@@ -941,7 +943,7 @@ export default function DungeonLiveWorld() {
                 >
                   <span>{entry.region.toUpperCase()}</span>
                   <strong>{entry.title}</strong>
-                  <small>{isCurrent ? "YOU ARE HERE" : canTravel ? "NEXT PASSAGE" : cleared ? "WARDEN REMEMBERED" : sealed ? "SEALED BY THE QUIET" : "NOT CONNECTED"}</small>
+                  <small>{isCurrent ? "YOU ARE HERE" : canTravel ? "NEXT PASSAGE" : cleared ? "WARDEN REMEMBERED" : sealed ? "SEALED BY THE QUIET" : visited ? "MAPPED" : "NOT YET MAPPED"}</small>
                 </button>
               )
             })}
