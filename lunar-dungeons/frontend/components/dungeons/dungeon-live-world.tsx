@@ -1048,7 +1048,7 @@ export default function DungeonLiveWorld() {
             <LiveScene
               room={room}
               enemyEnabled={!!activeEnemy}
-              serverBossHp={campaign?.activeBoss?.id === room.enemy?.id ? campaign.activeBoss.hp : null}
+              serverBossHp={campaign?.activeBoss?.id === room.enemy?.id ? campaign?.activeBoss?.hp ?? null : null}
               abilities={abilities}
               foundLore={campaign?.discoveredLore ?? []}
               foundSecrets={campaign?.discoveredSecrets ?? []}
