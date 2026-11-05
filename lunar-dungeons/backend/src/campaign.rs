@@ -273,6 +273,9 @@ async fn update_campaign(
             }
             campaign.current_room = room.to_string();
         }
+        "respawn" => {
+            campaign.current_room = campaign.checkpoint_room.clone();
+        }
         "checkpoint" => {
             let room = event.room_id.as_deref().unwrap_or_default();
             if room != campaign.current_room {
