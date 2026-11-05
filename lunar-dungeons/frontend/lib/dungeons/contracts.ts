@@ -143,10 +143,10 @@ export const DUNGEON_CHRONICLE: DungeonChronicleChapter[] = [
   {
     id: 5,
     title: "The Quiet Between Heartbeats",
-    region: "The Quiet Void",
+    region: "Quiet Beyond",
     companion: "Iri, carrying the first lantern",
     companionLine: "Iri: “If you remember me, I will remember the way home.”",
-    boss: "The Quiet King",
+    boss: "Orin · First Keeper",
     startStage: 641,
     endStage: 800,
     summary: "The Quiet Beyond has no horizon. Rooms appear only when someone remembers them. Iri's lantern begins to glow without a flame, and the Wayfarer hears a voice that knows every step they have taken. At the end waits Orin, who has guarded the silence for so long that even their own name became a locked door.",
@@ -177,7 +177,7 @@ export const DUNGEON_TIERS: DungeonTier[] = [
     chapters: ["Starfall Vestibule", "The Orrey Walk", "Cometglass Stacks", "The Lost Constellary", "Moonlit Index", "The Gravity Well", "Astral Scriptorium", "The Shattered Meridian", "Eclipse Atrium", "The Celestial Engine", "Nullstar Annex", "The Chronology Vault", "The Forgotten Zodiac", "The Eventide Spiral", "The Observatory Ring", "The First Star"],
   },
   {
-    id: 5, name: "The Quiet Void", subtitle: "The edge of every story", color: "#f18ec7", glow: "#914b86",
+    id: 5, name: "Quiet Beyond", subtitle: "The edge of every story", color: "#f18ec7", glow: "#914b86",
     chapters: ["The Unlit Threshold", "Hushwater Hall", "The Pale Fracture", "Nullstone Gallery", "The Unmaking Steps", "Echoes Without Names", "The Dusk Engine", "The Hollow Meridian", "The Veil Between", "The Quiet Labyrinth", "Ash of Memory", "The Last Reflection", "The Nameless Archive", "The Black Horizon", "The Final Ring", "Beyond the Silence"],
   },
 ]
