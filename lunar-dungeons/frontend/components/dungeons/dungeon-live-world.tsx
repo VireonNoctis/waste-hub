@@ -11,6 +11,7 @@ import {
   DEFAULT_ACCESSIBILITY,
   LUNAR_ENDINGS,
   QUEST_CHOICES,
+  WORLD_ROOMS,
   WORLD_ROOM_BY_ID,
 } from "@/lib/dungeons/campaign"
 import type {
@@ -606,6 +607,7 @@ export default function DungeonLiveWorld() {
   const [showChronicle, setShowChronicle] = useState(false)
   const [showBestiary, setShowBestiary] = useState(false)
   const [showQuests, setShowQuests] = useState(false)
+  const [showMap, setShowMap] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [remapping, setRemapping] = useState<Action | null>(null)
   const [endingChoice, setEndingChoice] = useState(false)
@@ -796,6 +798,7 @@ export default function DungeonLiveWorld() {
           <p>A connected realm of quiet ruins, remembered names, and paths that open as you grow.</p>
         </div>
         <div className="ld-live-heading-actions">
+          <button onClick={() => setShowMap((value) => !value)} aria-expanded={showMap}><Map size={15} /> World Map</button>
           <button onClick={() => setShowChronicle((value) => !value)} aria-expanded={showChronicle}><BookOpen size={15} /> Chronicle</button>
           <button onClick={() => setShowBestiary((value) => !value)} aria-expanded={showBestiary}><BookOpen size={15} /> Bestiary <span>{campaign?.bestiary.length ?? 0}</span></button>
           <button onClick={() => setShowQuests((value) => !value)} aria-expanded={showQuests}><Sparkles size={15} /> Threads <span>{completedQuestCount}/6</span></button>
@@ -814,6 +817,41 @@ export default function DungeonLiveWorld() {
 
       {error && <div className="ld-live-error" role="alert">{error}<button onClick={() => setError("")} aria-label="Dismiss"><X size={14} /></button></div>}
       {toast && <div className="ld-live-toast" role="status">{toast}<button onClick={() => setToast("")} aria-label="Dismiss"><X size={14} /></button></div>}
+
+      {showMap && (
+        <div className="ld-live-panel ld-live-world-map">
+          <div className="ld-live-panel-head"><div><span>THE MOONWAKE ATLAS</span><h3>Every road remembers a way home.</h3></div><button onClick={() => setShowMap(false)} aria-label="Close world map"><X size={16} /></button></div>
+          <p className="ld-live-map-copy">The kingdoms form one connected descent. Only the passages beside your current room can be entered from here.</p>
+          <div className="ld-live-map-route">
+            {WORLD_ROOMS.map((entry) => {
+              const exit = room.exits.find((candidate) => candidate.target === entry.id)
+              const gateReady = !exit?.ability || (exit.ability === "five-secrets" ? (campaign?.discoveredSecrets.length ?? 0) >= 5 : abilities.includes(exit.ability))
+              const isCurrent = entry.id === roomId
+              const canTravel = !!exit && gateReady
+              const cleared = entry.enemy?.kind === "boss" && !!campaign?.bossesDefeated.includes(entry.enemy.id)
+              const sealed = entry.region === "underlight" ? (campaign?.discoveredSecrets.length ?? 0) < 5
+                : entry.region === "ember" ? !campaign?.bossesDefeated.includes("verdant_colossus")
+                  : entry.region === "frost" ? !campaign?.bossesDefeated.includes("ember_sovereign")
+                    : entry.region === "astral" ? !campaign?.bossesDefeated.includes("hollow_monarch")
+                      : entry.region === "quiet" ? !campaign?.bossesDefeated.includes("astral_warden")
+                        : false
+              return (
+                <button
+                  key={entry.id}
+                  className={isCurrent ? "is-current" : canTravel ? "is-next" : sealed ? "is-sealed" : ""}
+                  disabled={!canTravel}
+                  onClick={() => void changeRoom(entry.id)}
+                  title={entry.subtitle}
+                >
+                  <span>{entry.region.toUpperCase()}</span>
+                  <strong>{entry.title}</strong>
+                  <small>{isCurrent ? "YOU ARE HERE" : canTravel ? "NEXT PASSAGE" : cleared ? "WARDEN REMEMBERED" : sealed ? "SEALED BY THE QUIET" : "NOT CONNECTED"}</small>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {showChronicle && (
         <div className="ld-live-panel ld-live-chronicle">
@@ -914,7 +952,7 @@ export default function DungeonLiveWorld() {
               foundSecrets={campaign?.discoveredSecrets ?? []}
               settings={settings}
               inputRef={inputRef}
-              paused={paused || !!dialogue || endingChoice || showSettings || showChronicle || showBestiary || showQuests}
+              paused={paused || !!dialogue || endingChoice || showSettings || showChronicle || showBestiary || showQuests || showMap}
               onHud={setHud}
               onEvent={(action, key) => void saveWorldEvent(action, key)}
               onRoomExit={(target) => void changeRoom(target)}
@@ -988,6 +1026,11 @@ export default function DungeonLiveWorld() {
                 <strong>{ending.title}</strong><span>{ending.description}</span>
               </button>
             ))}
+            <p className="ld-live-affinity-epilogue">
+              {(campaign?.companionAffinity ?? 0) >= 4
+                ? "Iri stays beside the Wayfarer. The old observatory becomes a place they tend together, not a duty either must carry alone."
+                : "Iri leaves her lantern in the observatory window, then follows the moth-lights back into the kingdoms. The path between you remains open."}
+            </p>
           </section>
         </div>
       )}
