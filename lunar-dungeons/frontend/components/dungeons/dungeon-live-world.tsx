@@ -4,7 +4,7 @@ import { Canvas, useFrame } from "@react-three/fiber"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { MutableRefObject } from "react"
 import * as THREE from "three"
-import { BookOpen, Heart, Map, Pause, Play, Settings2, ShieldCheck, Sparkles, Swords, Wind, X } from "lucide-react"
+import { BookOpen, Heart, Map, Pause, Play, Settings2, ShieldCheck, Sparkles, Wind, X } from "lucide-react"
 import {
   BESTIARY_ENTRIES,
   CAMPAIGN_CHAPTERS,
@@ -378,7 +378,7 @@ function LiveScene({
       if (room.enemy.kind === "ground") {
         p.enemyX += Math.sign(p.x - p.enemyX) * Math.min(1.4 * dt, distance * 0.12)
       } else if (room.enemy.kind === "float") {
-        p.enemyY = -1.8 + Math.sin(p.enemyClock * 1.6) * 0.6
+        p.enemyY = settings.reducedMotion ? -1.8 : -1.8 + Math.sin(p.enemyClock * 1.6) * 0.6
         p.enemyX += Math.sin(p.enemyClock * 0.7) * dt * 0.7
       } else {
         p.enemyX = 5.3 + Math.sin(p.enemyClock * 0.58) * 1.7
