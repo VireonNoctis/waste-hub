@@ -11,11 +11,11 @@ import {
   DEFAULT_ACCESSIBILITY,
   LUNAR_ENDINGS,
   QUEST_CHOICES,
-  WORLD_ROOMS,
   WORLD_ROOM_BY_ID,
 } from "@/lib/dungeons/campaign"
 import type {
   AccessibilitySettings,
+  CampaignEventKind,
   CampaignRoom,
   CampaignSnapshot,
 } from "@/lib/dungeons/campaign"
@@ -143,7 +143,6 @@ function LiveScene({
   const playerRef = useRef<THREE.Group>(null)
   const enemyRef = useRef<THREE.Group>(null)
   const warningRef = useRef<THREE.Mesh>(null)
-  const cameraRef = useRef<THREE.Camera | null>(null)
   const reportedBestiary = useRef(false)
   const reportedBoss = useRef(false)
   const eventCooldown = useRef(0)
@@ -553,7 +552,7 @@ export default function DungeonLiveWorld() {
   remappingRef.current = remapping
 
   const applyEvent = useCallback(async (event: {
-    action: string
+    action: CampaignEventKind
     roomId?: string
     key?: string
     value?: string
@@ -674,6 +673,10 @@ export default function DungeonLiveWorld() {
       setDialogueBusy(false)
     }
   }
+
+  useEffect(() => {
+    if (campaign?.bossesDefeated.includes("orin_first_keeper") && !campaign.ending) setEndingChoice(true)
+  }, [campaign])
 
   const saveEnding = async (ending: string) => {
     try {
@@ -829,7 +832,6 @@ export default function DungeonLiveWorld() {
             camera={{ position: [0, 0, 24], zoom: 28 }}
             dpr={[1, 1.5]}
             gl={{ antialias: false, powerPreference: "high-performance", alpha: false }}
-            onCreated={({ camera }) => { cameraRef.current = camera }}
           >
             <color attach="background" args={[room.background]} />
             <LiveScene
