@@ -129,7 +129,7 @@ interface LiveSceneProps {
   inputRef: MutableRefObject<InputState>
   paused: boolean
   onHud: (hud: HudState) => void
-  onEvent: (action: "lore" | "secret" | "bestiary" | "boss", key: string) => void
+  onEvent: (action: "lore" | "secret" | "bestiary" | "boss-hit", key: string) => void
   onRoomExit: (roomId: string) => void
   onNpc: (npc: NpcConversation) => void
   onCheckpoint: (title: string) => void
@@ -137,7 +137,7 @@ interface LiveSceneProps {
 }
 
 function LiveScene({
-  room, enemyEnabled, abilities, foundLore, foundSecrets, settings, inputRef, paused,
+  room, enemyEnabled, serverBossHp, abilities, foundLore, foundSecrets, settings, inputRef, paused,
   onHud, onEvent, onRoomExit, onNpc, onCheckpoint, onRespawn,
 }: LiveSceneProps) {
   const playerRef = useRef<THREE.Group>(null)
@@ -167,7 +167,7 @@ function LiveScene({
     current.invulnerable = 0
     current.enemyX = 4.5
     current.enemyY = room.enemy?.kind === "float" ? -1.7 : -3.7
-    current.enemyHp = enemyEnabled ? room.enemy?.hp ?? 0 : 0
+    current.enemyHp = enemyEnabled ? (room.enemy?.kind === "boss" ? serverBossHp ?? room.enemy.hp : room.enemy?.hp ?? 0) : 0
     current.enemyClock = 0
     current.enemyTelegraph = false
     current.enemyAlive = enemyEnabled
@@ -345,13 +345,8 @@ function LiveScene({
         if (distance < 2.8 && Math.abs(p.y - p.enemyY) < 2.3) {
           p.enemyHp = Math.max(0, p.enemyHp - (boss ? 23 : 30))
           p.enemyHitFlash = 0.12
-          if (p.enemyHp <= 0) {
-            p.enemyAlive = false
-            if (boss && !reportedBoss.current) {
-              reportedBoss.current = true
-              onEvent("boss", room.enemy.id)
-            }
-          }
+          if (boss) onEvent("boss-hit", room.enemy.id)
+          if (p.enemyHp <= 0) p.enemyAlive = false
         }
       }
     }    } else if (pressed.has("attack")) {
@@ -678,15 +673,17 @@ export default function DungeonLiveWorld() {
     }
   }, [])
 
-  const saveWorldEvent = useCallback(async (action: "lore" | "secret" | "bestiary" | "boss", key: string) => {
+  const saveWorldEvent = useCallback(async (action: "lore" | "secret" | "bestiary" | "boss-hit", key: string) => {
     try {
       await applyEvent({ action, key })
+      const bossWon = action === "boss-hit" && next.bossesDefeated.includes(key)
       const copy = action === "lore" ? "Memory added to your Chronicle."
         : action === "secret" ? "A hidden mark answers the lantern."
           : action === "bestiary" ? "Bestiary pattern recorded."
-            : "Warden defeated. A new movement art has awakened."
+            : bossWon ? "Warden defeated. A new movement art has awakened."
+              : "The warden's seal weakens. Keep reading its pattern."
       setToast(copy)
-      if (action === "boss" && key === "orin_first_keeper") setEndingChoice(true)
+      if (bossWon && key === "orin_first_keeper") setEndingChoice(true)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The campaign could not be saved.")
     }
