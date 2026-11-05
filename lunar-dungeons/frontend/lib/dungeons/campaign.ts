@@ -1,5 +1,5 @@
 export type CampaignRegion = "moonwake" | "mosslight" | "ember" | "frost" | "astral" | "quiet" | "underlight"
-export type CampaignEventKind = "room" | "checkpoint" | "respawn" | "lore" | "secret" | "bestiary" | "quest" | "boss" | "ending" | "settings"
+export type CampaignEventKind = "room" | "checkpoint" | "respawn" | "lore" | "secret" | "bestiary" | "quest" | "boss-hit" | "ending" | "settings"
 
 export interface AccessibilitySettings {
   reducedMotion: boolean
@@ -9,7 +9,7 @@ export interface AccessibilitySettings {
   controls: Record<string, string>
 }
 
-export interface CampaignSnapshot {
+export interface CampaignBoss {\n  id: string\n  hp: number\n  maxHp: number\n}\n\nexport interface CampaignSnapshot {
   currentRoom: string
   checkpointRoom: string
   unlockedAbilities: string[]
