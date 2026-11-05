@@ -272,7 +272,7 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
             </div>
             <div className="ld-header-actions">
               <button className="ld-help-button" onClick={() => setShowChronicle((value) => !value)} aria-expanded={showChronicle}>
-                <BookOpen size={16} /> Chronicle <ChevronDown size={14} className={showChronicle ? "ld-rotate" : ""} />
+                <BookOpen size={16} /> Atlas Chronicle <ChevronDown size={14} className={showChronicle ? "ld-rotate" : ""} />
               </button>
               <button className="ld-help-button" onClick={() => setShowRules((value) => !value)} aria-expanded={showRules}>
                 <CircleHelp size={16} /> How it works <ChevronDown size={14} className={showRules ? "ld-rotate" : ""} />
@@ -297,8 +297,8 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
         {showChronicle && (
           <section className="ld-chronicle-panel" aria-label="Campaign chronicle">
             <div className="ld-chronicle-intro">
-              <div className="ld-panel-kicker">THE CHRONICLE OF ASTER</div>
-              <h2>Five notes. One forgotten moon.</h2>
+              <div className="ld-panel-kicker">THE EIGHT HUNDRED-STEP CHRONICLE</div>
+              <h2>A story told across 800 steps.</h2>
               <p>{DUNGEON_PROLOGUE}</p>
             </div>
             <div className="ld-chronicle-grid">
