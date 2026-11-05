@@ -18,6 +18,7 @@ export interface CampaignBoss {
 export interface CampaignSnapshot {
   currentRoom: string
   checkpointRoom: string
+  visitedRooms: string[]
   unlockedAbilities: string[]
   discoveredLore: string[]
   discoveredSecrets: string[]
