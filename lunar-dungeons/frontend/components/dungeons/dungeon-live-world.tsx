@@ -146,6 +146,7 @@ function LiveScene({
   const warningRef = useRef<THREE.Mesh>(null)
   const reportedBestiary = useRef(false)
   const eventCooldown = useRef(0)
+  const lastRoomId = useRef(room.id)
   const game = useRef({
     x: room.spawn, y: -3.7, vx: 0, vy: 0, facing: 1, hp: 100,
     grounded: false, jumps: 0, dashTime: 0, invulnerable: 0,
@@ -156,6 +157,15 @@ function LiveScene({
 
   useEffect(() => {
     const current = game.current
+    const roomChanged = lastRoomId.current !== room.id
+    if (!roomChanged) {
+      if (!enemyEnabled) {
+        current.enemyAlive = false
+        current.enemyHp = 0
+      }
+      return
+    }
+    lastRoomId.current = room.id
     current.x = room.spawn
     current.y = -3.7
     current.vx = 0
@@ -171,9 +181,10 @@ function LiveScene({
     current.enemyClock = 0
     current.enemyTelegraph = false
     current.enemyAlive = enemyEnabled
+    current.warningX = 4.5
     current.lastAttack = -2
     reportedBestiary.current = false
-  }, [room.id, enemyEnabled])
+  }, [room.id, room.spawn, room.enemy, enemyEnabled, serverBossHp])
 
   useFrame((state, rawDelta) => {
     if (paused) return
