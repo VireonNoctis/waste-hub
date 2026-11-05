@@ -9,7 +9,13 @@ export interface AccessibilitySettings {
   controls: Record<string, string>
 }
 
-export interface CampaignBoss {\n  id: string\n  hp: number\n  maxHp: number\n}\n\nexport interface CampaignSnapshot {
+export interface CampaignBoss {
+  id: string
+  hp: number
+  maxHp: number
+}
+
+export interface CampaignSnapshot {
   currentRoom: string
   checkpointRoom: string
   unlockedAbilities: string[]
