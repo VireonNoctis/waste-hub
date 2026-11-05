@@ -47,3 +47,21 @@ export function abandonDungeon(attemptId: string) {
     method: "DELETE",
   })
 }
+
+
+export function getCampaign() {
+  return request<{ campaign: CampaignSnapshot }>("campaign")
+}
+
+export function sendCampaignEvent(event: {
+  action: CampaignEventKind
+  roomId?: string
+  key?: string
+  value?: string
+  settings?: AccessibilitySettings
+}) {
+  return request<{ campaign: CampaignSnapshot }>("campaign/event", {
+    method: "POST",
+    body: JSON.stringify(event),
+  })
+}
