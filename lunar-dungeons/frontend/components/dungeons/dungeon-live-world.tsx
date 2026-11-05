@@ -146,7 +146,7 @@ function LiveScene({
   const warningRef = useRef<THREE.Mesh>(null)
   const reportedBestiary = useRef(false)
   const eventCooldown = useRef(0)
-  const lastRoomId = useRef(room.id)
+  const lastRoomId = useRef("")
   const game = useRef({
     x: room.spawn, y: -3.7, vx: 0, vy: 0, facing: 1, hp: 100,
     grounded: false, jumps: 0, dashTime: 0, invulnerable: 0,
