@@ -1,0 +1,922 @@
+"use client"
+
+import { Canvas, useFrame } from "@react-three/fiber"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import type { MutableRefObject } from "react"
+import * as THREE from "three"
+import { BookOpen, Heart, Map, Pause, Play, Settings2, ShieldCheck, Sparkles, Swords, Wind, X } from "lucide-react"
+import {
+  BESTIARY_ENTRIES,
+  CAMPAIGN_CHAPTERS,
+  DEFAULT_ACCESSIBILITY,
+  LUNAR_ENDINGS,
+  QUEST_CHOICES,
+  WORLD_ROOMS,
+  WORLD_ROOM_BY_ID,
+} from "@/lib/dungeons/campaign"
+import type {
+  AccessibilitySettings,
+  CampaignRoom,
+  CampaignSnapshot,
+} from "@/lib/dungeons/campaign"
+import { getCampaign, sendCampaignEvent } from "@/lib/dungeons/api"
+import "./dungeon-live-world.css"
+
+type Action = keyof AccessibilitySettings["controls"]
+type InputState = { held: Set<Action>; pressed: Set<Action> }
+type HudState = {
+  hp: number
+  maxHp: number
+  enemyHp: number
+  enemyMaxHp: number
+  enemyName: string
+  boss: boolean
+  phase: "sealed" | "awakened" | null
+  telegraph: boolean
+  prompt: string
+  message: string
+}
+type NpcConversation = NonNullable<CampaignRoom["npc"]>
+
+const EMPTY_HUD: HudState = {
+  hp: 100, maxHp: 100, enemyHp: 0, enemyMaxHp: 0, enemyName: "",
+  boss: false, phase: null, telegraph: false, prompt: "", message: "",
+}
+
+function PlayerSprite({ playerRef }: { playerRef: MutableRefObject<THREE.Group | null> }) {
+  return (
+    <group ref={playerRef} position={[-9, -3.7, 1]}>
+      <mesh position={[0, -0.18, 0]}>
+        <boxGeometry args={[0.72, 0.8, 0.2]} />
+        <meshBasicMaterial color="#aeb8e8" />
+      </mesh>
+      <mesh position={[0, 0.42, 0.02]}>
+        <boxGeometry args={[0.64, 0.48, 0.22]} />
+        <meshBasicMaterial color="#e8e7ff" />
+      </mesh>
+      <mesh position={[0.17, 0.44, 0.16]}>
+        <boxGeometry args={[0.08, 0.09, 0.025]} />
+        <meshBasicMaterial color="#343657" />
+      </mesh>
+      <mesh position={[-0.17, 0.44, 0.16]}>
+        <boxGeometry args={[0.08, 0.09, 0.025]} />
+        <meshBasicMaterial color="#343657" />
+      </mesh>
+      <mesh position={[0, -0.62, -0.02]}>
+        <boxGeometry args={[0.94, 0.2, 0.16]} />
+        <meshBasicMaterial color="#716c9f" />
+      </mesh>
+      <mesh position={[0.42, -0.12, -0.08]} rotation={[0, 0, -0.22]}>
+        <boxGeometry args={[0.12, 0.9, 0.12]} />
+        <meshBasicMaterial color="#d9d5f8" />
+      </mesh>
+      <mesh position={[-0.48, 0.02, 0.03]}>
+        <boxGeometry args={[0.18, 0.24, 0.12]} />
+        <meshBasicMaterial color="#d4e5f0" />
+      </mesh>
+    </group>
+  )
+}
+
+function WorldBackdrop({ room }: { room: CampaignRoom }) {
+  const stars = useMemo(() => Array.from({ length: 72 }, (_, i) => ({
+    x: -14 + ((i * 37) % 280) / 10,
+    y: -0.2 + ((i * 53) % 105) / 10,
+    size: 0.035 + (i % 4) * 0.018,
+    alpha: 0.28 + (i % 5) * 0.11,
+  })), [room.region])
+  return (
+    <group>
+      <mesh position={[0, 0, -5]}>
+        <planeGeometry args={[34, 14]} />
+        <meshBasicMaterial color={room.background} />
+      </mesh>
+      <mesh position={[0, -0.6, -4.4]}>
+        <planeGeometry args={[34, 8]} />
+        <meshBasicMaterial color={room.midground} transparent opacity={0.34} />
+      </mesh>
+      {Array.from({ length: 9 }, (_, i) => (
+        <mesh key={i} position={[-14 + i * 3.5, -1.65 + (i % 3) * 0.45, -3.5]}>
+          <boxGeometry args={[2.1 + (i % 2) * 0.8, 3.2 + (i % 4) * 0.5, 0.2]} />
+          <meshBasicMaterial color="#101426" transparent opacity={0.48} />
+        </mesh>
+      ))}
+      <mesh position={[8.8, 4.4, -3.1]}>
+        <circleGeometry args={[1.25, 8]} />
+        <meshBasicMaterial color={room.accent} transparent opacity={0.1} />
+      </mesh>
+      <mesh position={[8.8, 4.4, -3]}>
+        <circleGeometry args={[0.82, 8]} />
+        <meshBasicMaterial color={room.background} />
+      </mesh>
+      {stars.map((star, index) => (
+        <mesh key={index} position={[star.x, star.y, -2.9]}>
+          <boxGeometry args={[star.size, star.size, 0.02]} />
+          <meshBasicMaterial color="#e6e2ff" transparent opacity={star.alpha} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+interface LiveSceneProps {
+  room: CampaignRoom
+  enemyEnabled: boolean
+  abilities: string[]
+  foundLore: string[]
+  foundSecrets: string[]
+  settings: AccessibilitySettings
+  inputRef: MutableRefObject<InputState>
+  paused: boolean
+  onHud: (hud: HudState) => void
+  onEvent: (action: "lore" | "secret" | "bestiary" | "boss", key: string) => void
+  onRoomExit: (roomId: string) => void
+  onNpc: (npc: NpcConversation) => void
+  onCheckpoint: (title: string) => void
+  onRespawn: () => void
+}
+
+function LiveScene({
+  room, enemyEnabled, abilities, foundLore, foundSecrets, settings, inputRef, paused,
+  onHud, onEvent, onRoomExit, onNpc, onCheckpoint, onRespawn,
+}: LiveSceneProps) {
+  const playerRef = useRef<THREE.Group>(null)
+  const enemyRef = useRef<THREE.Group>(null)
+  const warningRef = useRef<THREE.Mesh>(null)
+  const cameraRef = useRef<THREE.Camera | null>(null)
+  const reportedBestiary = useRef(false)
+  const reportedBoss = useRef(false)
+  const eventCooldown = useRef(0)
+  const game = useRef({
+    x: room.spawn, y: -3.7, vx: 0, vy: 0, facing: 1, hp: 100,
+    grounded: false, jumps: 0, dashTime: 0, invulnerable: 0,
+    enemyX: 4.5, enemyY: -3.7, enemyHp: enemyEnabled ? room.enemy?.hp ?? 0 : 0,
+    enemyClock: 0, enemyTelegraph: false, enemyHitFlash: 0, enemyAlive: enemyEnabled,
+    lastAttack: -2, interactLock: 0, shake: 0, lastPrompt: "", timeSinceHud: 0,
+  })
+
+  useEffect(() => {
+    const current = game.current
+    current.x = room.spawn
+    current.y = -3.7
+    current.vx = 0
+    current.vy = 0
+    current.hp = 100
+    current.grounded = false
+    current.jumps = 0
+    current.dashTime = 0
+    current.invulnerable = 0
+    current.enemyX = 4.5
+    current.enemyY = room.enemy?.kind === "float" ? -1.7 : -3.7
+    current.enemyHp = enemyEnabled ? room.enemy?.hp ?? 0 : 0
+    current.enemyClock = 0
+    current.enemyTelegraph = false
+    current.enemyAlive = enemyEnabled
+    current.lastAttack = -2
+    reportedBestiary.current = false
+    reportedBoss.current = false
+  }, [room.id, enemyEnabled])
+
+  useFrame((state, rawDelta) => {
+    if (paused) return
+    const dt = Math.min(rawDelta, 0.035)
+    const p = game.current
+    const input = inputRef.current
+    const held = input.held
+    const pressed = input.pressed
+    const left = held.has("left")
+    const right = held.has("right")
+    const move = (right ? 1 : 0) - (left ? 1 : 0)
+
+    if (p.dashTime > 0) {
+      p.dashTime = Math.max(0, p.dashTime - dt)
+      p.vx = p.facing * 18
+      p.vy = 0
+    } else {
+      p.vx = THREE.MathUtils.damp(p.vx, move * 7.3, 13, dt)
+      if (move !== 0) p.facing = move
+      p.vy -= 24 * dt
+    }
+
+    if (pressed.has("jump")) {
+      if (p.grounded) {
+        p.vy = 10.5
+        p.grounded = false
+        p.jumps = 1
+      } else if (abilities.includes("double-jump") && p.jumps < 2) {
+        p.vy = 9.7
+        p.jumps += 1
+      } else if (abilities.includes("wall-jump") && Math.abs(p.x) > 12.2) {
+        p.vy = 10.2
+        p.vx = -Math.sign(p.x) * 8.5
+        p.facing = -Math.sign(p.x)
+      }
+    }
+
+    if (pressed.has("dash") && abilities.includes("dash") && p.dashTime <= 0) {
+      p.dashTime = 0.17
+      p.invulnerable = Math.max(p.invulnerable, 0.2)
+    }
+    if (pressed.has("grapple") && abilities.includes("grapple")) {
+      const anchorX = p.x < 0 ? -1.5 : 1.5
+      p.vx = (anchorX - p.x) * 1.7
+      p.vy = 13.4
+      p.grounded = false
+      p.jumps = 1
+    }
+
+    const oldY = p.y
+    p.x += p.vx * dt
+    p.y += p.vy * dt
+    p.x = THREE.MathUtils.clamp(p.x, -13.45, 13.45)
+
+    const floorY = -4.55
+    if (p.y - 0.7 <= floorY) {
+      p.y = floorY + 0.7
+      p.vy = 0
+      p.grounded = true
+      p.jumps = 0
+    } else {
+      p.grounded = false
+    }
+    for (const platform of room.platforms) {
+      const crossed = p.vy <= 0 && oldY - 0.7 >= platform.y && p.y - 0.7 <= platform.y
+      if (crossed && Math.abs(p.x - platform.x) <= platform.width / 2 + 0.35) {
+        p.y = platform.y + 0.72
+        p.vy = 0
+        p.grounded = true
+        p.jumps = 0
+      }
+    }
+
+    if (p.enemyAlive && room.enemy) {
+      p.enemyClock += dt
+      p.enemyHitFlash = Math.max(0, p.enemyHitFlash - dt)
+      const boss = room.enemy.kind === "boss"
+      const phaseTwo = boss && p.enemyHp <= (room.enemy.hp / 2)
+      const cycleLength = boss ? (phaseTwo ? 2.8 : 3.7) : 3.25
+      const cycle = p.enemyClock % cycleLength
+      p.enemyTelegraph = cycle > cycleLength - 0.9
+      const distance = Math.abs(p.x - p.enemyX)
+      if (room.enemy.kind === "ground") {
+        p.enemyX += Math.sign(p.x - p.enemyX) * Math.min(1.4 * dt, distance * 0.12)
+      } else if (room.enemy.kind === "float") {
+        p.enemyY = -1.8 + Math.sin(p.enemyClock * 1.6) * 0.6
+        p.enemyX += Math.sin(p.enemyClock * 0.7) * dt * 0.7
+      } else {
+        p.enemyX = 5.3 + Math.sin(p.enemyClock * 0.58) * 1.7
+      }
+      if (!reportedBestiary.current && distance < 9) {
+        reportedBestiary.current = true
+        onEvent("bestiary", room.enemy.id)
+      }
+      const attackMoment = cycle > cycleLength - 0.08 && cycle < cycleLength
+      if (attackMoment && p.invulnerable <= 0 && distance < (boss ? 7.2 : 2.0) && Math.abs(p.y - p.enemyY) < 2.3) {
+        p.hp = Math.max(0, p.hp - (boss ? (phaseTwo ? 17 : 13) : 10))
+        p.vx = p.x < p.enemyX ? -4.5 : 4.5
+        p.invulnerable = 0.75
+        p.shake = settings.cameraShake ? 0.2 : 0
+      }
+      if (pressed.has("attack") && state.clock.elapsedTime - p.lastAttack > 0.3) {
+        p.lastAttack = state.clock.elapsedTime
+        if (distance < 2.8 && Math.abs(p.y - p.enemyY) < 2.3) {
+          p.enemyHp = Math.max(0, p.enemyHp - (boss ? 23 : 30))
+          p.enemyHitFlash = 0.12
+          if (p.enemyHp <= 0) {
+            p.enemyAlive = false
+            if (boss && !reportedBoss.current) {
+              reportedBoss.current = true
+              onEvent("boss", room.enemy.id)
+            }
+          }
+        }
+      }
+    } else if (pressed.has("attack")) {
+      p.lastAttack = state.clock.elapsedTime
+    }
+
+    p.invulnerable = Math.max(0, p.invulnerable - dt)
+    p.shake = Math.max(0, p.shake - dt)
+    p.interactLock = Math.max(0, p.interactLock - dt)
+    eventCooldown.current = Math.max(0, eventCooldown.current - dt)
+
+    let prompt = ""
+    const npcNear = room.npc && Math.abs(p.x - (room.npc.id === "iri" ? 0 : 7.5)) < 1.8 && Math.abs(p.y + 3.7) < 1.5
+    const loreNear = room.lore && !foundLore.includes(room.lore.id) && Math.abs(p.x - room.lore.x) < 1.65 && Math.abs(p.y + 3.7) < 2.2
+    const shrineNear = room.shrine && Math.abs(p.x - room.shrine.x) < 1.5 && Math.abs(p.y + 3.7) < 1.7
+    const secretNear = room.secret && !foundSecrets.includes(room.secret.id) && Math.abs(p.x - room.secret.x) < 1.55
+    const nearbyExit = room.exits.find((exit) => Math.abs(p.x - exit.x) < 1.25)
+    if (npcNear) prompt = "E · Speak with " + room.npc?.name
+    else if (loreNear) prompt = "E · Read " + room.lore?.title
+    else if (shrineNear) prompt = "E · Attune " + room.shrine?.title
+    else if (secretNear) prompt = "E · Reveal hidden passage"
+    else if (nearbyExit) prompt = "E · Enter " + nearbyExit.label
+    if (pressed.has("interact") && p.interactLock <= 0 && eventCooldown.current <= 0) {
+      p.interactLock = 0.22
+      if (npcNear && room.npc) onNpc(room.npc)
+      else if (loreNear && room.lore) {
+        onEvent("lore", room.lore.id)
+        eventCooldown.current = 1
+      } else if (shrineNear && room.shrine) {
+        onCheckpoint(room.shrine.title)
+        p.hp = 100
+        eventCooldown.current = 1
+      } else if (secretNear && room.secret) {
+        onEvent("secret", room.secret.id)
+        eventCooldown.current = 1
+      } else if (nearbyExit) {
+        const required = nearbyExit.ability
+        const allowed = !required || (required === "five-secrets" ? foundSecrets.length >= 5 : abilities.includes(required))
+        if (allowed) onRoomExit(nearbyExit.target)
+        else prompt = required === "five-secrets" ? "Five hidden marks are needed" : "Sealed · requires " + required.replace("-", " ")
+      }
+    }
+
+    if (p.hp <= 0) {
+      p.hp = 100
+      p.x = room.spawn
+      p.y = -3.7
+      p.vx = 0
+      p.vy = 0
+      p.enemyAlive = false
+      onRespawn()
+    }
+
+    const player = playerRef.current
+    if (player) {
+      player.position.set(p.x, p.y, 1)
+      player.scale.x = p.facing
+      player.visible = p.invulnerable <= 0 || Math.floor(state.clock.elapsedTime * 18) % 2 === 0
+    }
+    const enemy = enemyRef.current
+    if (enemy) {
+      enemy.position.set(p.enemyX, p.enemyY, 0.8)
+      enemy.visible = p.enemyAlive
+      enemy.scale.setScalar(p.enemyHitFlash > 0 ? 1.12 : 1)
+    }
+    if (warningRef.current) {
+      warningRef.current.visible = p.enemyTelegraph && p.enemyAlive
+      warningRef.current.position.set(p.enemyX, -4.45, 0.25)
+      warningRef.current.scale.set(1.6 + Math.sin(state.clock.elapsedTime * 18) * 0.12, 0.18, 1)
+    }
+
+    const camera = state.camera
+    camera.position.x = THREE.MathUtils.damp(camera.position.x, p.x * 0.35, 3.1, dt)
+    const shake = p.shake > 0 ? Math.sin(state.clock.elapsedTime * 80) * p.shake * 0.16 : 0
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, shake, 4, dt)
+    camera.updateProjectionMatrix()
+
+    p.timeSinceHud += dt
+    if (p.timeSinceHud > 0.12) {
+      p.timeSinceHud = 0
+      onHud({
+        hp: p.hp,
+        maxHp: 100,
+        enemyHp: p.enemyAlive ? p.enemyHp : 0,
+        enemyMaxHp: room.enemy?.hp ?? 0,
+        enemyName: room.enemy?.name ?? "",
+        boss: room.enemy?.kind === "boss" && p.enemyAlive,
+        phase: room.enemy?.kind === "boss" && p.enemyAlive ? (p.enemyHp <= (room.enemy.hp / 2) ? "awakened" : "sealed") : null,
+        telegraph: p.enemyTelegraph && p.enemyAlive,
+        prompt,
+        message: p.enemyTelegraph ? "A pattern is gathering. Find the safe lane." : "",
+      })
+    }
+    input.pressed.clear()
+  })
+
+  return (
+    <>
+      <WorldBackdrop room={room} />
+      <mesh position={[0, -4.82, -0.3]}>
+        <boxGeometry args={[30, 0.55, 0.5]} />
+        <meshBasicMaterial color="#171a2a" />
+      </mesh>
+      <mesh position={[0, -4.5, 0]}>
+        <boxGeometry args={[30, 0.08, 0.28]} />
+        <meshBasicMaterial color={room.accent} transparent opacity={0.65} />
+      </mesh>
+      {room.platforms.map((platform, index) => (
+        <group key={index} position={[platform.x, platform.y, 0]}>
+          <mesh>
+            <boxGeometry args={[platform.width, 0.28, 0.4]} />
+            <meshBasicMaterial color="#252943" />
+          </mesh>
+          <mesh position={[0, 0.15, 0.02]}>
+            <boxGeometry args={[platform.width, 0.06, 0.42]} />
+            <meshBasicMaterial color={room.accent} />
+          </mesh>
+          {Array.from({ length: Math.floor(platform.width / 0.55) }, (_, i) => (
+            <mesh key={i} position={[-platform.width / 2 + 0.28 + i * 0.55, -0.19, 0.03]}>
+              <boxGeometry args={[0.18, 0.22, 0.1]} />
+              <meshBasicMaterial color="#12162a" />
+            </mesh>
+          ))}
+        </group>
+      ))}
+      {room.exits.map((exit) => (
+        <group key={exit.target} position={[exit.x, -3.25, -0.2]}>
+          <mesh>
+            <boxGeometry args={[0.74, 2.55, 0.18]} />
+            <meshBasicMaterial color="#b8afd9" transparent opacity={0.15} />
+          </mesh>
+          <mesh position={[0, 0, 0.12]}>
+            <boxGeometry args={[0.08, 2.5, 0.08]} />
+            <meshBasicMaterial color={room.accent} />
+          </mesh>
+          <mesh position={[0, 0.9, 0.14]}>
+            <circleGeometry args={[0.24, 6]} />
+            <meshBasicMaterial color="#f0eaff" />
+          </mesh>
+        </group>
+      ))}
+      {room.npc && (
+        <group position={[room.npc.id === "iri" ? 0 : 7.5, -3.68, 0.65]}>
+          <mesh>
+            <boxGeometry args={[0.52, 0.78, 0.18]} />
+            <meshBasicMaterial color={room.npc.id === "iri" ? "#d7d0f5" : "#b6a7ce"} />
+          </mesh>
+          <mesh position={[0, 0.5, 0.02]}>
+            <boxGeometry args={[0.5, 0.42, 0.2]} />
+            <meshBasicMaterial color="#f0eaff" />
+          </mesh>
+          <mesh position={[0.31, 0.56, -0.03]} rotation={[0, 0, -0.45]}>
+            <boxGeometry args={[0.18, 0.7, 0.07]} />
+            <meshBasicMaterial color={room.accent} />
+          </mesh>
+        </group>
+      )}
+      {room.lore && !foundLore.includes(room.lore.id) && (
+        <group position={[room.lore.x, -3.65, 0.55]}>
+          <mesh>
+            <boxGeometry args={[0.55, 0.95, 0.18]} />
+            <meshBasicMaterial color="#d8d2f3" />
+          </mesh>
+          <mesh position={[0, 0.13, 0.12]}>
+            <boxGeometry args={[0.25, 0.06, 0.04]} />
+            <meshBasicMaterial color="#7f80aa" />
+          </mesh>
+          <mesh position={[0, -0.05, 0.12]}>
+            <boxGeometry args={[0.25, 0.06, 0.04]} />
+            <meshBasicMaterial color="#7f80aa" />
+          </mesh>
+        </group>
+      )}
+      {room.shrine && (
+        <group position={[room.shrine.x, -3.55, 0.6]}>
+          <mesh>
+            <boxGeometry args={[0.9, 0.16, 0.35]} />
+            <meshBasicMaterial color="#8b89b7" />
+          </mesh>
+          <mesh position={[0, 0.5, 0]}>
+            <octahedronGeometry args={[0.34, 0]} />
+            <meshBasicMaterial color="#d7d2ff" />
+          </mesh>
+          <mesh position={[0, 0.5, -0.04]}>
+            <octahedronGeometry args={[0.52, 0]} />
+            <meshBasicMaterial color={room.accent} transparent opacity={0.18} />
+          </mesh>
+        </group>
+      )}
+      {room.secret && !foundSecrets.includes(room.secret.id) && (
+        <group position={[room.secret.x, -3.74, 0.6]}>
+          <mesh>
+            <boxGeometry args={[0.72, 0.92, 0.2]} />
+            <meshBasicMaterial color="#716a9c" transparent opacity={0.6} />
+          </mesh>
+          <mesh position={[0, 0, 0.13]}>
+            <boxGeometry args={[0.16, 0.16, 0.08]} />
+            <meshBasicMaterial color="#f0d7ff" />
+          </mesh>
+        </group>
+      )}
+      {enemyEnabled && room.enemy && (
+        <group ref={enemyRef} position={[4.5, -3.7, 0.8]}>
+          <mesh>
+            <boxGeometry args={room.enemy.kind === "boss" ? [1.7, 1.75, 0.3] : [0.88, 0.95, 0.22]} />
+            <meshBasicMaterial color={room.enemy.kind === "boss" ? "#b78fb9" : room.enemy.kind === "float" ? "#a6a4d2" : "#8ca9a1"} />
+          </mesh>
+          <mesh position={[0, room.enemy.kind === "boss" ? 0.82 : 0.5, 0.04]}>
+            <boxGeometry args={room.enemy.kind === "boss" ? [1.25, 0.48, 0.28] : [0.62, 0.38, 0.24]} />
+            <meshBasicMaterial color="#ece6ff" />
+          </mesh>
+          <mesh position={[-0.48, 0.1, 0.16]}>
+            <boxGeometry args={[0.13, 0.14, 0.04]} />
+            <meshBasicMaterial color="#26253f" />
+          </mesh>
+          <mesh position={[0.48, 0.1, 0.16]}>
+            <boxGeometry args={[0.13, 0.14, 0.04]} />
+            <meshBasicMaterial color="#26253f" />
+          </mesh>
+          <mesh position={[0, -0.55, -0.05]}>
+            <boxGeometry args={[room.enemy.kind === "boss" ? 2 : 1.05, 0.2, 0.18]} />
+            <meshBasicMaterial color="#655176" />
+          </mesh>
+        </group>
+      )}
+      <mesh ref={warningRef} visible={false} position={[0, -4.45, 0.25]}>
+        <boxGeometry args={[1.8, 0.18, 0.04]} />
+        <meshBasicMaterial color="#f0c1dc" transparent opacity={0.85} />
+      </mesh>
+      <PlayerSprite playerRef={playerRef} />
+    </>
+  )
+}
+
+const ACTION_LABELS: Record<Action, string> = {
+  left: "Move left", right: "Move right", jump: "Jump", attack: "Lantern strike",
+  dash: "Moon dash", interact: "Interact", grapple: "Star grapple",
+}
+
+export default function DungeonLiveWorld() {
+  const [campaign, setCampaign] = useState<CampaignSnapshot | null>(null)
+  const [roomId, setRoomId] = useState("moonwake_observatory")
+  const [hud, setHud] = useState(EMPTY_HUD)
+  const [loading, setLoading] = useState(true)
+  const [paused, setPaused] = useState(false)
+  const [dialogue, setDialogue] = useState<NpcConversation | null>(null)
+  const [showChronicle, setShowChronicle] = useState(false)
+  const [showBestiary, setShowBestiary] = useState(false)
+  const [showQuests, setShowQuests] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [remapping, setRemapping] = useState<Action | null>(null)
+  const [endingChoice, setEndingChoice] = useState(false)
+  const [toast, setToast] = useState("")
+  const [error, setError] = useState("")
+  const [dialogueBusy, setDialogueBusy] = useState(false)
+  const inputRef = useRef<InputState>({ held: new Set(), pressed: new Set() })
+  const settingsRef = useRef<AccessibilitySettings>(DEFAULT_ACCESSIBILITY)
+  const remappingRef = useRef<Action | null>(null)
+  const room = WORLD_ROOM_BY_ID[roomId] ?? WORLD_ROOM_BY_ID.moonwake_observatory
+  const settings = campaign?.settings ?? DEFAULT_ACCESSIBILITY
+  settingsRef.current = settings
+  remappingRef.current = remapping
+
+  const applyEvent = useCallback(async (event: {
+    action: string
+    roomId?: string
+    key?: string
+    value?: string
+    settings?: AccessibilitySettings
+  }) => {
+    const response = await sendCampaignEvent(event)
+    setCampaign(response.campaign)
+    return response.campaign
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    getCampaign().then((response) => {
+      if (!active) return
+      setCampaign(response.campaign)
+      setRoomId(response.campaign.currentRoom)
+    }).catch((reason) => {
+      if (active) setError(reason instanceof Error ? reason.message : "The campaign could not be loaded.")
+    }).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
+
+  useEffect(() => {
+    const actionForCode = (code: string): Action | undefined => (
+      Object.entries(settingsRef.current.controls).find(([, mapped]) => mapped === code)?.[0] as Action | undefined
+    )
+    const down = (event: KeyboardEvent) => {
+      if (remappingRef.current) {
+        if (event.code === "Escape") {
+          setRemapping(null)
+          return
+        }
+        const action = remappingRef.current
+        const next = { ...settingsRef.current, controls: { ...settingsRef.current.controls, [action]: event.code } }
+        setCampaign((current) => current ? { ...current, settings: next } : current)
+        setRemapping(null)
+        void sendCampaignEvent({ action: "settings", settings: next }).then((response) => setCampaign(response.campaign)).catch((reason) => setError(reason instanceof Error ? reason.message : "Could not save controls."))
+        event.preventDefault()
+        return
+      }
+      const action = actionForCode(event.code)
+      if (!action) return
+      event.preventDefault()
+      inputRef.current.held.add(action)
+      if (!event.repeat) inputRef.current.pressed.add(action)
+    }
+    const up = (event: KeyboardEvent) => {
+      const action = actionForCode(event.code)
+      if (action) inputRef.current.held.delete(action)
+    }
+    const clear = () => { inputRef.current.held.clear(); inputRef.current.pressed.clear() }
+    window.addEventListener("keydown", down)
+    window.addEventListener("keyup", up)
+    window.addEventListener("blur", clear)
+    return () => {
+      window.removeEventListener("keydown", down)
+      window.removeEventListener("keyup", up)
+      window.removeEventListener("blur", clear)
+    }
+  }, [])
+
+  const saveWorldEvent = useCallback(async (action: "lore" | "secret" | "bestiary" | "boss", key: string) => {
+    try {
+      await applyEvent({ action, key })
+      const copy = action === "lore" ? "Memory added to your Chronicle."
+        : action === "secret" ? "A hidden mark answers the lantern."
+          : action === "bestiary" ? "Bestiary pattern recorded."
+            : "Warden defeated. A new movement art has awakened."
+      setToast(copy)
+      if (action === "boss" && key === "orin_first_keeper") setEndingChoice(true)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The campaign could not be saved.")
+    }
+  }, [applyEvent])
+
+  const changeRoom = useCallback(async (target: string) => {
+    try {
+      const next = await applyEvent({ action: "room", roomId: target })
+      setRoomId(next.currentRoom)
+      setHud(EMPTY_HUD)
+      setToast("Entered " + (WORLD_ROOM_BY_ID[target]?.title ?? "a new room") + ".")
+      setPaused(false)
+      setDialogue(null)
+    } catch (reason) {
+      setToast(reason instanceof Error ? reason.message : "That passage remains sealed.")
+    }
+  }, [applyEvent])
+
+  const setCheckpoint = useCallback(async (title: string) => {
+    try {
+      await applyEvent({ action: "checkpoint", roomId })
+      setToast(title + " attuned. Your return point is saved.")
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The shrine could not be attuned.")
+    }
+  }, [applyEvent, roomId])
+
+  const respawn = useCallback(async () => {
+    try {
+      const next = await applyEvent({ action: "respawn" })
+      setRoomId(next.currentRoom)
+      setToast("The lantern returns you to your last shrine.")
+    } catch (reason) {
+      setToast(reason instanceof Error ? reason.message : "The last shrine could not be reached.")
+    }
+  }, [applyEvent])
+
+  const saveQuest = async (choice: string) => {
+    if (!dialogue || dialogueBusy) return
+    setDialogueBusy(true)
+    try {
+      await applyEvent({ action: "quest", key: dialogue.quest, value: choice })
+      setToast("The conversation is remembered.")
+      setDialogue(null)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The conversation could not be saved.")
+    } finally {
+      setDialogueBusy(false)
+    }
+  }
+
+  const saveEnding = async (ending: string) => {
+    try {
+      await applyEvent({ action: "ending", value: ending })
+      setEndingChoice(false)
+      setToast("Your ending has been written into the Moonwake Chronicle.")
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The ending could not be saved.")
+    }
+  }
+
+  const saveSettings = async (next: AccessibilitySettings) => {
+    setCampaign((current) => current ? { ...current, settings: next } : current)
+    try {
+      const response = await sendCampaignEvent({ action: "settings", settings: next })
+      setCampaign(response.campaign)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Accessibility settings could not be saved.")
+    }
+  }
+
+  const pushTouch = (action: Action, down: boolean) => {
+    if (down) {
+      inputRef.current.held.add(action)
+      inputRef.current.pressed.add(action)
+    } else {
+      inputRef.current.held.delete(action)
+    }
+  }
+
+  const abilities = campaign?.unlockedAbilities ?? []
+  const currentChapter = room.chapter > 0 ? CAMPAIGN_CHAPTERS[room.chapter - 1] : null
+  const activeEnemy = room.enemy && !(campaign?.bossesDefeated.includes(room.enemy.id)) ? room.enemy : undefined
+  const completedQuestCount = campaign?.completedQuests.length ?? 0
+
+  if (loading) {
+    return <section className="ld-live-world"><div className="ld-live-loading">Opening the Moonwake observatory…</div></section>
+  }
+
+  return (
+    <section className="ld-live-world" data-reduced-motion={settings.reducedMotion} data-telegraphs={settings.highContrastTelegraphs ? "high" : "soft"}>
+      <div className="ld-live-heading">
+        <div>
+          <div className="ld-live-kicker">LUNAR · THE MOONWAKE TESTAMENT</div>
+          <h2>Walk beneath the moon.</h2>
+          <p>A connected realm of quiet ruins, remembered names, and paths that open as you grow.</p>
+        </div>
+        <div className="ld-live-heading-actions">
+          <button onClick={() => setShowChronicle((value) => !value)} aria-expanded={showChronicle}><BookOpen size={15} /> Chronicle</button>
+          <button onClick={() => setShowBestiary((value) => !value)} aria-expanded={showBestiary}><BookOpen size={15} /> Bestiary <span>{campaign?.bestiary.length ?? 0}</span></button>
+          <button onClick={() => setShowQuests((value) => !value)} aria-expanded={showQuests}><Sparkles size={15} /> Threads <span>{completedQuestCount}/6</span></button>
+          <button onClick={() => setShowSettings((value) => !value)} aria-expanded={showSettings} aria-label="Accessibility and controls"><Settings2 size={16} /></button>
+        </div>
+      </div>
+
+      <div className="ld-live-status">
+        <span className="ld-live-location"><i /> {room.title} <small>/ {room.subtitle}</small></span>
+        <span className="ld-live-abilities">
+          {["dash", "wall-jump", "double-jump", "grapple"].map((ability) => (
+            <span key={ability} className={abilities.includes(ability) ? "is-unlocked" : ""}>{ability.toUpperCase()}</span>
+          ))}
+        </span>
+      </div>
+
+      {error && <div className="ld-live-error" role="alert">{error}<button onClick={() => setError("")} aria-label="Dismiss"><X size={14} /></button></div>}
+      {toast && <div className="ld-live-toast" role="status">{toast}<button onClick={() => setToast("")} aria-label="Dismiss"><X size={14} /></button></div>}
+
+      {showChronicle && (
+        <div className="ld-live-panel ld-live-chronicle">
+          <div className="ld-live-panel-head"><div><span>THE MOONWAKE TESTAMENT</span><h3>Five notes. A world that remembers.</h3></div><button onClick={() => setShowChronicle(false)} aria-label="Close chronicle"><X size={16} /></button></div>
+          <p className="ld-live-prologue">Before the first sunrise, Moonwake was a silver city built around a quiet observatory. Its people listened to the moon as if it were a living archive. When the Quiet arrived—not darkness, but the absence of being remembered—Orin broke the Lumen into five notes and hid them below the city. You wake beneath the observatory with a lantern that has no flame. Iri knows it. She will not yet say why.</p>
+          <div className="ld-live-chapter-grid">
+            {CAMPAIGN_CHAPTERS.map((chapter, index) => {
+              const opened = (campaign?.bossesDefeated.length ?? 0) >= index
+              const completed = !!campaign?.bossesDefeated.includes(["verdant_colossus", "ember_sovereign", "hollow_monarch", "astral_warden", "orin_first_keeper"][index])
+              return (
+                <article key={chapter.id} className={completed ? "is-restored" : opened ? "is-open" : "is-sealed"}>
+                  <span>ACT 0{chapter.id} · {chapter.region.toUpperCase()}</span>
+                  <h4>{opened ? chapter.title : "A chapter beyond the mist"}</h4>
+                  <p>{opened ? chapter.summary : "A new page will appear when the previous warden is remembered."}</p>
+                  {opened && <small>{chapter.companion} · {chapter.boss}</small>}
+                  {completed && <blockquote>{chapter.revelation}<br /><b>{chapter.memory}</b></blockquote>}
+                </article>
+              )
+            })}
+          </div>
+          {campaign?.ending && <div className="ld-live-ending"><span>ENDING RECORDED</span><strong>{LUNAR_ENDINGS.find((ending) => ending.id === campaign.ending)?.title}</strong><p>{LUNAR_ENDINGS.find((ending) => ending.id === campaign.ending)?.description}</p></div>}
+        </div>
+      )}
+
+      {showBestiary && (
+        <div className="ld-live-panel">
+          <div className="ld-live-panel-head"><div><span>FIELD NOTES</span><h3>Bestiary</h3></div><button onClick={() => setShowBestiary(false)} aria-label="Close bestiary"><X size={16} /></button></div>
+          <div className="ld-live-entry-grid">
+            {(campaign?.bestiary ?? []).map((key) => {
+              const entry = BESTIARY_ENTRIES[key]
+              return entry ? <article key={key}><strong>{entry.title}</strong><p>{entry.pattern}</p><small>{entry.note}</small></article> : null
+            })}
+            {(campaign?.bestiary.length ?? 0) === 0 && <p className="ld-live-empty">Approach an unfamiliar creature to add its movement pattern here.</p>}
+          </div>
+        </div>
+      )}
+
+      {showQuests && (
+        <div className="ld-live-panel">
+          <div className="ld-live-panel-head"><div><span>COMPANION THREADS</span><h3>Promises kept along the way</h3></div><button onClick={() => setShowQuests(false)} aria-label="Close threads"><X size={16} /></button></div>
+          <div className="ld-live-quest-grid">
+            {Object.entries(QUEST_CHOICES).map(([key, choices]) => (
+              <article key={key} className={campaign?.completedQuests.includes(key) ? "is-done" : ""}>
+                <strong>{key.replaceAll("-", " ")}</strong>
+                <span>{campaign?.completedQuests.includes(key) ? "REMEMBERED" : "NOT YET SPOKEN"}</span>
+                <p>{campaign?.questChoices[key] ?? choices[0]}</p>
+              </article>
+            ))}
+          </div>
+          <p className="ld-live-affinity">Companion trust · {campaign?.companionAffinity ?? 0} / 6</p>
+        </div>
+      )}
+
+      {showSettings && (
+        <div className="ld-live-panel ld-live-settings">
+          <div className="ld-live-panel-head"><div><span>PERSONAL NIGHT MODE</span><h3>Accessibility & controls</h3></div><button onClick={() => setShowSettings(false)} aria-label="Close settings"><X size={16} /></button></div>
+          <div className="ld-live-setting-toggles">
+            {([
+              ["reducedMotion", "Reduce motion", "Reduce floating effects and camera transitions."],
+              ["cameraShake", "Camera shake", "Allow a small camera response when hit."],
+              ["highContrastTelegraphs", "High-contrast tells", "Make enemy warning lanes more visible."],
+              ["colorblindTelegraphs", "Shape-coded tells", "Pair colour with a distinct warning shape and label."],
+            ] as const).map(([key, label, description]) => (
+              <label key={key}><span><strong>{label}</strong><small>{description}</small></span><input type="checkbox" checked={settings[key]} onChange={(event) => void saveSettings({ ...settings, [key]: event.target.checked })} /></label>
+            ))}
+          </div>
+          <div className="ld-live-remap-grid">
+            {(Object.keys(ACTION_LABELS) as Action[]).map((action) => (
+              <button key={action} onClick={() => setRemapping(action)}><span>{ACTION_LABELS[action]}</span><kbd>{settings.controls[action]}</kbd></button>
+            ))}
+          </div>
+          {remapping && <p className="ld-live-remap-hint">Press a key for {ACTION_LABELS[remapping]}. Escape cancels.</p>}
+        </div>
+      )}
+
+      <div className="ld-live-game-frame">
+        <div className="ld-live-game-top">
+          <span><Map size={13} /> {room.region.toUpperCase()} · {currentChapter?.title ?? "THE LAST OBSERVATORY"}</span>
+          <div className="ld-live-top-actions">
+            <span><Heart size={13} /> {hud.hp}/{hud.maxHp}</span>
+            <button onClick={() => setPaused((value) => !value)}>{paused ? <Play size={13} /> : <Pause size={13} />}{paused ? "Resume" : "Pause"}</button>
+          </div>
+        </div>
+        <div className="ld-live-canvas-wrap">
+          <Canvas
+            orthographic
+            camera={{ position: [0, 0, 24], zoom: 28 }}
+            dpr={[1, 1.5]}
+            gl={{ antialias: false, powerPreference: "high-performance", alpha: false }}
+            onCreated={({ camera }) => { cameraRef.current = camera }}
+          >
+            <color attach="background" args={[room.background]} />
+            <LiveScene
+              room={room}
+              enemyEnabled={!!activeEnemy}
+              abilities={abilities}
+              foundLore={campaign?.discoveredLore ?? []}
+              foundSecrets={campaign?.discoveredSecrets ?? []}
+              settings={settings}
+              inputRef={inputRef}
+              paused={paused || !!dialogue || endingChoice || showSettings || showChronicle || showBestiary || showQuests}
+              onHud={setHud}
+              onEvent={(action, key) => void saveWorldEvent(action, key)}
+              onRoomExit={(target) => void changeRoom(target)}
+              onNpc={setDialogue}
+              onCheckpoint={(title) => void setCheckpoint(title)}
+              onRespawn={() => void respawn()}
+            />
+          </Canvas>
+          {hud.telegraph && (
+            <div className={settings.colorblindTelegraphs ? "ld-live-telegraph is-shaped" : "ld-live-telegraph"}>
+              <span>{settings.colorblindTelegraphs ? "▲" : "!"}</span>
+              {settings.highContrastTelegraphs ? "WARDEN PATTERN · MOVE FROM THE MARKED LANE" : "A pattern is gathering"}
+            </div>
+          )}
+          {paused && <div className="ld-live-pause"><span>THE NIGHT IS HELD</span><button onClick={() => setPaused(false)}><Play size={14} /> Return to the world</button></div>}
+          <div className="ld-live-room-title"><span>{room.title}</span><small>{room.subtitle}</small></div>
+          {hud.prompt && !paused && !dialogue && <div className="ld-live-interact-prompt">{hud.prompt}</div>}
+        </div>
+        <div className="ld-live-vitals">
+          <div><span>WAYFARER</span><div className="ld-live-health"><i style={{ width: (hud.hp / hud.maxHp * 100) + "%" }} /></div></div>
+          {hud.enemyName && hud.enemyMaxHp > 0 && (
+            <div><span>{hud.enemyName.toUpperCase()}</span><div className="ld-live-health is-enemy"><i style={{ width: (hud.enemyHp / hud.enemyMaxHp * 100) + "%" }} /></div></div>
+          )}
+          {hud.boss && <b className={hud.phase === "awakened" ? "is-awakened" : ""}>{hud.phase === "awakened" ? "AWAKENED" : "SEALED"}</b>}
+        </div>
+        <div className="ld-live-controls">
+          <div className="ld-live-instructions"><span>A / D</span> move <span>SPACE</span> jump <span>J</span> strike <span>K</span> dash <span>E</span> interact <span>G</span> grapple</div>
+          <div className="ld-live-touch" aria-label="Touch controls">
+            {(["left", "right", "jump", "attack", "dash", "interact", "grapple"] as Action[]).map((action) => (
+              <button
+                key={action}
+                aria-label={ACTION_LABELS[action]}
+                onPointerDown={(event) => { event.preventDefault(); pushTouch(action, true) }}
+                onPointerUp={() => pushTouch(action, false)}
+                onPointerLeave={() => pushTouch(action, false)}
+              >{action === "left" ? "←" : action === "right" ? "→" : action === "jump" ? "JUMP" : action === "attack" ? "STRIKE" : action === "dash" ? "DASH" : action === "interact" ? "USE" : "HOOK"}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="ld-live-footer">
+        <div><ShieldCheck size={15} /><span>Campaign progress, shrines, discoveries, quests, and endings are saved to Lunar.</span></div>
+        <div><Wind size={15} /><span>{abilities.length ? abilities.join(" · ").toUpperCase() : "Movement arts awaken as wardens are remembered"}</span></div>
+      </div>
+
+      {dialogue && (
+        <div className="ld-live-modal-backdrop" role="presentation">
+          <section className="ld-live-dialogue" role="dialog" aria-modal="true" aria-label={dialogue.name + " conversation"}>
+            <div className="ld-live-panel-head"><div><span>{dialogue.role.toUpperCase()}</span><h3>{dialogue.name}</h3></div><button onClick={() => setDialogue(null)} aria-label="Close conversation"><X size={16} /></button></div>
+            <p>“{dialogue.line}”</p>
+            <div className="ld-live-dialogue-choices">
+              {(QUEST_CHOICES[dialogue.quest] ?? []).map((choice) => (
+                <button key={choice} disabled={dialogueBusy || !!campaign?.completedQuests.includes(dialogue.quest)} onClick={() => void saveQuest(choice)}>
+                  {choice}
+                </button>
+              ))}
+            </div>
+            {campaign?.completedQuests.includes(dialogue.quest) && <small>This promise is already held in the Chronicle.</small>}
+          </section>
+        </div>
+      )}
+
+      {endingChoice && (
+        <div className="ld-live-modal-backdrop" role="presentation">
+          <section className="ld-live-dialogue ld-live-ending-choice" role="dialog" aria-modal="true" aria-label="Choose the ending">
+            <div className="ld-live-panel-head"><div><span>THE LAST NOTE</span><h3>What should the Lumen become?</h3></div><button onClick={() => setEndingChoice(false)} aria-label="Close ending choice"><X size={16} /></button></div>
+            <p>Orin has remembered their name. Iri stands beside the Lumen. The night is no longer asking for a keeper. It is asking what you will do with the light.</p>
+            {LUNAR_ENDINGS.map((ending) => (
+              <button key={ending.id} className="ld-live-ending-option" onClick={() => void saveEnding(ending.id)}>
+                <strong>{ending.title}</strong><span>{ending.description}</span>
+              </button>
+            ))}
+          </section>
+        </div>
+      )}
+    </section>
+  )
+}
