@@ -1,3 +1,4 @@
+import type { CampaignEventKind, CampaignSnapshot, AccessibilitySettings } from "./campaign"
 import type {
   DungeonAction,
   DungeonMode,
