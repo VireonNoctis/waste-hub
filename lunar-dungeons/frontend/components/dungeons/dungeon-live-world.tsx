@@ -150,7 +150,7 @@ function LiveScene({
     x: room.spawn, y: -3.7, vx: 0, vy: 0, facing: 1, hp: 100,
     grounded: false, jumps: 0, dashTime: 0, invulnerable: 0,
     enemyX: 4.5, enemyY: -3.7, enemyHp: enemyEnabled ? room.enemy?.hp ?? 0 : 0,
-    enemyClock: 0, enemyTelegraph: false, enemyHitFlash: 0, enemyAlive: enemyEnabled,
+    enemyClock: 0, enemyTelegraph: false, enemyHitFlash: 0, enemyAlive: enemyEnabled, warningX: 4.5,
     lastAttack: -2, interactLock: 0, shake: 0, lastPrompt: "", timeSinceHud: 0,
   })
 
@@ -198,17 +198,22 @@ function LiveScene({
     }
 
     if (pressed.has("jump")) {
+      const touchingWall = Math.abs(p.x) > 12.2 || room.platforms.some((platform) => (
+        Math.abs(Math.abs(p.x - platform.x) - platform.width / 2 - 0.35) < 0.32
+        && p.y < platform.y + 2.2 && p.y > platform.y - 0.7
+      ))
       if (p.grounded) {
         p.vy = 10.5
         p.grounded = false
         p.jumps = 1
+      } else if (touchingWall && abilities.includes("wall-jump")) {
+        p.vy = 10.2
+        p.vx = p.x < 0 ? 8.5 : -8.5
+        p.facing = p.x < 0 ? 1 : -1
+        p.jumps = 1
       } else if (abilities.includes("double-jump") && p.jumps < 2) {
         p.vy = 9.7
         p.jumps += 1
-      } else if (abilities.includes("wall-jump") && Math.abs(p.x) > 12.2) {
-        p.vy = 10.2
-        p.vx = -Math.sign(p.x) * 8.5
-        p.facing = -Math.sign(p.x)
       }
     }
 
@@ -255,8 +260,10 @@ function LiveScene({
       const phaseTwo = boss && p.enemyHp <= (room.enemy.hp / 2)
       const cycleLength = boss ? (phaseTwo ? 2.8 : 3.7) : 3.25
       const cycle = p.enemyClock % cycleLength
-      p.enemyTelegraph = cycle > cycleLength - 0.9
+      const patternIndex = Math.floor(p.enemyClock / cycleLength)
       const distance = Math.abs(p.x - p.enemyX)
+      let targetX = p.enemyX
+
       if (room.enemy.kind === "ground") {
         p.enemyX += Math.sign(p.x - p.enemyX) * Math.min(1.4 * dt, distance * 0.12)
       } else if (room.enemy.kind === "float") {
@@ -265,16 +272,73 @@ function LiveScene({
       } else {
         p.enemyX = 5.3 + Math.sin(p.enemyClock * 0.58) * 1.7
       }
+
+      if (boss) {
+        if (room.enemy.id === "hollow_monarch") targetX = patternIndex % 2 === 0 ? -5.2 : 5.2
+        else if (room.enemy.id === "astral_warden") targetX = Math.sin(patternIndex * 1.7) * 5.4
+        else if (room.enemy.id === "orin_first_keeper") targetX = 0
+        else if (room.enemy.id === "eclipse_warden") targetX = patternIndex % 2 === 0 ? 6.2 : -6.2
+      }
+      p.warningX = targetX
+      p.enemyTelegraph = cycle > cycleLength - 0.9
+
       if (!reportedBestiary.current && distance < 9) {
         reportedBestiary.current = true
         onEvent("bestiary", room.enemy.id)
       }
+
       const attackMoment = cycle > cycleLength - 0.08 && cycle < cycleLength
-      if (attackMoment && p.invulnerable <= 0 && distance < (boss ? 7.2 : 2.0) && Math.abs(p.y - p.enemyY) < 2.3) {
+      let attackHits = false
+      if (boss) {
+        switch (room.enemy.id) {
+          case "verdant_colossus":
+            attackHits = Math.abs(p.x - targetX) < 8 && p.y < -2.8
+            break
+          case "ember_sovereign":
+            attackHits = Math.abs(p.x - targetX) < 8.6 && p.y < -2.0
+            break
+          case "hollow_monarch":
+          case "astral_warden":
+          case "eclipse_warden":
+            attackHits = Math.abs(p.x - targetX) < 2.45 && p.y < -0.35
+            break
+          case "orin_first_keeper":
+            attackHits = Math.abs(p.x - targetX) < 8.2 && p.y < -1.7
+            break
+          default:
+            attackHits = distance < 7.2 && Math.abs(p.y - p.enemyY) < 2.3
+        }
+      } else {
+        switch (room.enemy.id) {
+          case "mossling":
+          case "ash_hound":
+            attackHits = distance < 2.1 && Math.abs(p.y - p.enemyY) < 1.7
+            break
+          case "thorn_sprite":
+          case "frost_echo":
+            attackHits = distance < 2.45 && Math.abs(p.y - p.enemyY) < 2.1
+            break
+          case "cinder_wisp":
+          case "quietling":
+            attackHits = distance < 3.25 && p.y < -2.1
+            break
+          case "star_construct":
+          case "astral_drake":
+            attackHits = distance < 2.9 && Math.abs(p.y - p.enemyY) < 2.4
+            break
+          case "eclipse_shade":
+            attackHits = distance < 2.55 && Math.abs(p.y - p.enemyY) < 1.9
+            break
+          default:
+            attackHits = distance < 2.3 && Math.abs(p.y - p.enemyY) < 2
+        }
+      }
+
+      if (attackMoment && attackHits && p.invulnerable <= 0) {
         p.hp = Math.max(0, p.hp - (boss ? (phaseTwo ? 17 : 13) : 10))
-        p.vx = p.x < p.enemyX ? -4.5 : 4.5
+        p.vx = p.x < targetX ? -4.5 : 4.5
         p.invulnerable = 0.75
-        p.shake = settings.cameraShake ? 0.2 : 0
+        p.shake = settings.cameraShake && !settings.reducedMotion ? 0.2 : 0
       }
       if (pressed.has("attack") && state.clock.elapsedTime - p.lastAttack > 0.3) {
         p.lastAttack = state.clock.elapsedTime
@@ -290,7 +354,7 @@ function LiveScene({
           }
         }
       }
-    } else if (pressed.has("attack")) {
+    }    } else if (pressed.has("attack")) {
       p.lastAttack = state.clock.elapsedTime
     }
 
@@ -355,7 +419,7 @@ function LiveScene({
     }
     if (warningRef.current) {
       warningRef.current.visible = p.enemyTelegraph && p.enemyAlive
-      warningRef.current.position.set(p.enemyX, -4.45, 0.25)
+      warningRef.current.position.set(p.warningX, -4.45, 0.25)
       warningRef.current.scale.set(1.6 + Math.sin(state.clock.elapsedTime * 18) * 0.12, 0.18, 1)
     }
 
