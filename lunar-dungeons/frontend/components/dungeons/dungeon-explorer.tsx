@@ -49,7 +49,7 @@ import {
 import type { WorldNode } from "./dungeon-world"
 import "./dungeon-explorer.css"
 
-const DungeonWorld = dynamic(() => import("./dungeon-world"), {
+const DungeonLiveWorld = dynamic(() => import("./dungeon-live-world"), {\n  ssr: false,\n  loading: () => <div className="ld-webgl-fallback">Opening the Moonwake observatory…</div>,\n})\n\nconst DungeonWorld = dynamic(() => import("./dungeon-world"), {
   ssr: false,
   loading: () => <div className="ld-webgl-fallback">Loading the pixel realm…</div>,
 })
@@ -257,12 +257,12 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
     <main className="lunar-dungeon">
       <div className="ld-shell">
         <header className="ld-header">
-          <div className="ld-brandline"><span className="ld-brand-mark">✦</span><span>LUNAR / EXPEDITIONS</span><span className="ld-header-divider">/</span><span className="ld-muted">DUNGEON ATLAS</span></div>
+          <div className="ld-brandline"><span className="ld-brand-mark">✦</span><span>LUNAR / MOONWAKE</span><span className="ld-header-divider">/</span><span className="ld-muted">EXPEDITION ATLAS</span></div>
           <div className="ld-header-main">
             <div>
-              <p className="ld-eyebrow">THE OLD WORLD IS CALLING</p>
-              <h1>Explore Dungeons</h1>
-              <p className="ld-subtitle">A pixel-bound journey through 800 stages and beyond.</p>
+              <p className="ld-eyebrow">A QUIET WORLD REMEMBERS</p>
+              <h1>The Moonwake Testament</h1>
+              <p className="ld-subtitle">A moonlit metroidvania across forgotten kingdoms, 800 atlas stages, and Infinity.</p>
               <p className="ld-current-chapter"><span>CHAPTER 0{currentChronicle.id}</span> {currentChronicle.title}</p>
             </div>
             <div className="ld-header-actions">
@@ -276,7 +276,7 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
           </div>
           {showRules && (
             <div className="ld-rules-panel">
-              <strong>One stage at a time.</strong> Enter an unlocked room, choose an action each turn, and clear its enemy to open the next stage. Every 20th stage is a boss room. Clear stage 800 to unlock Infinity, where each victory opens a deeper run.
+              <strong>Walk the world. Remember its people.</strong> Explore connected rooms in real time, learn movement arts from the wardens, attune shrines, uncover hidden chambers, and choose how the story ends. The 800-stage atlas and Infinity descent remain available below.
             </div>
           )}
           <div className="ld-stats-row">
@@ -287,7 +287,7 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
           </div>
         </header>
 
-        {showChronicle && (
+        <DungeonLiveWorld />\n\n        {showChronicle && (
           <section className="ld-chronicle-panel" aria-label="Campaign chronicle">
             <div className="ld-chronicle-intro">
               <div className="ld-panel-kicker">THE CHRONICLE OF ASTER</div>
