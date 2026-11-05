@@ -102,6 +102,102 @@ function WorldBackdrop({ room }: { room: CampaignRoom }) {
           <meshBasicMaterial color="#101426" transparent opacity={0.48} />
         </mesh>
       ))}
+      {room.region === "moonwake" && (
+        <group position={[-8.8, 0.2, -3.2]}>
+          <mesh>
+            <torusGeometry args={[3.25, 0.24, 4, 12, Math.PI]} />
+            <meshBasicMaterial color="#aaa6d7" transparent opacity={0.62} />
+          </mesh>
+          <mesh position={[0, -2.1, 0]}>
+            <boxGeometry args={[7.2, 0.22, 0.3]} />
+            <meshBasicMaterial color="#8e8abf" />
+          </mesh>
+          <mesh position={[0, 0.25, -0.2]}>
+            <circleGeometry args={[0.75, 8]} />
+            <meshBasicMaterial color="#dfd9ff" transparent opacity={0.38} />
+          </mesh>
+        </group>
+      )}
+      {room.region === "mosslight" && (
+        <group>
+          {[-10, -5, 4, 10].map((x, i) => (
+            <group key={x} position={[x, -0.8, -2.8]}>
+              <mesh rotation={[0, 0, i % 2 ? -0.38 : 0.32]}>
+                <cylinderGeometry args={[0.12, 0.32, 6.4, 5]} />
+                <meshBasicMaterial color="#476c64" />
+              </mesh>
+              <mesh position={[i % 2 ? 0.7 : -0.6, -2.2, 0.25]}>
+                <cylinderGeometry args={[0.08, 0.12, 0.8, 5]} />
+                <meshBasicMaterial color="#b5d8ba" />
+              </mesh>
+              <mesh position={[i % 2 ? 0.7 : -0.6, -1.7, 0.25]}>
+                <sphereGeometry args={[0.42, 6, 4]} />
+                <meshBasicMaterial color="#b4a8d9" />
+              </mesh>
+            </group>
+          ))}
+        </group>
+      )}
+      {room.region === "ember" && (
+        <group>
+          {[-10, -4, 4, 10].map((x, i) => (
+            <group key={x} position={[x, -1.5, -2.5]}>
+              <mesh>
+                <boxGeometry args={[1.3, 5.2 + (i % 2) * 1.2, 0.5]} />
+                <meshBasicMaterial color="#533443" />
+              </mesh>
+              <mesh position={[0, -0.1, 0.29]}>
+                <boxGeometry args={[0.22, 2.1, 0.06]} />
+                <meshBasicMaterial color="#e6a1a5" transparent opacity={0.72} />
+              </mesh>
+              <mesh position={[0, 2.1, 0]}>
+                <coneGeometry args={[0.95, 0.55, 4]} />
+                <meshBasicMaterial color="#a66b88" />
+              </mesh>
+            </group>
+          ))}
+        </group>
+      )}
+      {room.region === "frost" && (
+        <group>
+          {[-11, -7, -2, 4, 9, 12].map((x, i) => (
+            <mesh key={x} position={[x, -1.5 + (i % 2) * 0.4, -2.6]} rotation={[0, 0, (i % 2 ? -1 : 1) * 0.14]}>
+              <coneGeometry args={[0.9 + (i % 3) * 0.24, 3.4 + (i % 2) * 1.8, 5]} />
+              <meshBasicMaterial color={i % 2 ? "#7899bd" : "#a8c9dc"} transparent opacity={0.72} />
+            </mesh>
+          ))}
+        </group>
+      )}
+      {room.region === "astral" && (
+        <group position={[0, 1, -2.4]}>
+          <mesh rotation={[0, 0, 0.24]}>
+            <torusGeometry args={[5.2, 0.035, 3, 36]} />
+            <meshBasicMaterial color="#b7a7eb" transparent opacity={0.7} />
+          </mesh>
+          <mesh rotation={[0, 0, -0.62]}>
+            <torusGeometry args={[3.6, 0.04, 3, 32]} />
+            <meshBasicMaterial color="#dacafa" transparent opacity={0.56} />
+          </mesh>
+          <mesh rotation={[0, 0, 1.05]}>
+            <torusGeometry args={[2.2, 0.035, 3, 28]} />
+            <meshBasicMaterial color="#8c8cce" transparent opacity={0.64} />
+          </mesh>
+        </group>
+      )}
+      {(room.region === "quiet" || room.region === "underlight") && (
+        <group>
+          {[-10, -5, 1, 7, 11].map((x, i) => (
+            <mesh key={x} position={[x, -1 + (i % 3) * 0.45, -2.5]} rotation={[0, 0, (i % 2 ? 1 : -1) * 0.28]}>
+              <boxGeometry args={[0.28, 4 + (i % 2), 0.3]} />
+              <meshBasicMaterial color={room.accent} transparent opacity={0.34} />
+            </mesh>
+          ))}
+          <mesh position={[0, 1.2, -2.3]} rotation={[0, 0, Math.PI / 4]}>
+            <octahedronGeometry args={[2.1, 0]} />
+            <meshBasicMaterial color="#cdb2e4" transparent opacity={0.1} />
+          </mesh>
+        </group>
+      )}
       <mesh position={[8.8, 4.4, -3.1]}>
         <circleGeometry args={[1.25, 8]} />
         <meshBasicMaterial color={room.accent} transparent opacity={0.1} />
