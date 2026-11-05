@@ -533,7 +533,6 @@ function LiveScene({
     camera.position.x = THREE.MathUtils.damp(camera.position.x, p.x * 0.35, 3.1, dt)
     const shake = p.shake > 0 ? Math.sin(state.clock.elapsedTime * 80) * p.shake * 0.16 : 0
     camera.position.y = THREE.MathUtils.damp(camera.position.y, shake, 4, dt)
-    camera.updateProjectionMatrix()
 
     p.timeSinceHud += dt
     if (p.timeSinceHud > 0.12) {
