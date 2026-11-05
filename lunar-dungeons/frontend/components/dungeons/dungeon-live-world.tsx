@@ -885,6 +885,7 @@ export default function DungeonLiveWorld() {
   const currentChapter = room.chapter > 0 ? CAMPAIGN_CHAPTERS[room.chapter - 1] : null
   const activeEnemy = room.enemy && !(campaign?.bossesDefeated.includes(room.enemy.id)) ? room.enemy : undefined
   const completedQuestCount = campaign?.completedQuests.length ?? 0
+  const selectedEnding = LUNAR_ENDINGS.find((ending) => ending.id === campaign?.ending)
 
   if (loading) {
     return <section className="ld-live-world"><div className="ld-live-loading">Opening the Moonwake observatory…</div></section>
@@ -974,7 +975,7 @@ export default function DungeonLiveWorld() {
               )
             })}
           </div>
-          {campaign?.ending && <div className="ld-live-ending"><span>ENDING RECORDED</span><strong>{LUNAR_ENDINGS.find((ending) => ending.id === campaign.ending)?.title}</strong><p>{LUNAR_ENDINGS.find((ending) => ending.id === campaign.ending)?.description}</p></div>}
+          {selectedEnding && <div className="ld-live-ending"><span>ENDING RECORDED</span><strong>{selectedEnding.title}</strong><p>{selectedEnding.description}</p><blockquote>{selectedEnding.epilogue}</blockquote></div>}
         </div>
       )}
 
