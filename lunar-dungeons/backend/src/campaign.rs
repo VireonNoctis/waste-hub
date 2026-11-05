@@ -438,10 +438,10 @@ async fn update_campaign(
                 if !campaign.bosses_defeated.iter().any(|item| item == boss) {
                     campaign.bosses_defeated.push(boss.to_string());
                 }
-                if let Some(ability) = ability_for_boss(boss) {
-                    if !campaign.unlocked_abilities.iter().any(|item| item == ability) {
-                        campaign.unlocked_abilities.push(ability.to_string());
-                    }
+                if let Some(ability) = ability_for_boss(boss)
+                    && !campaign.unlocked_abilities.iter().any(|item| item == ability)
+                {
+                    campaign.unlocked_abilities.push(ability.to_string());
                 }
             }
         }
