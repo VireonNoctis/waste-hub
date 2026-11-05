@@ -189,7 +189,7 @@ export const WORLD_ROOMS: CampaignRoom[] = [
     exits: [{ x: -13.1, target: "mosslight_briar_well", label: "Mosslight" }, { x: 13.1, target: "ember_slag_bridge", label: "Slag Bridge", ability: "dash" }],
     enemy: { id: "cinder_wisp", name: "Cinder Wisp", hp: 60, pattern: "A pale ember circles above you, flashes twice, then drops a warm shockwave.", kind: "float" },
     npc: { id: "vey", name: "Vey", role: "Ash-smith", line: "I have kept a hearth warm for a name I can no longer pronounce.", quest: "a-hearth-for-two" },
-    lore: { id: "lore_cinder", title: "The Hearth Ledger", text: "We gave the fire our memories so that a stranger would still find a light in the window.", x: 7.5 },
+    lore: { id: "lore_cinder", title: "The Hearth Ledger", text: "We gave the fire our memories so that a stranger would still find a light in the window.", x: -2.5 },
     shrine: { id: "shrine_cinder", x: -8.2, title: "Ashen Rest" },
   },
   {
@@ -217,8 +217,8 @@ export const WORLD_ROOMS: CampaignRoom[] = [
     exits: [{ x: -13.1, target: "ember_last_hearth", label: "Ember Hollow" }, { x: 13.1, target: "frost_glass_causeway", label: "Glass Causeway", ability: "wall-jump" }],
     enemy: { id: "frost_echo", name: "Frost Echo", hp: 74, pattern: "The echo disappears in a cold shimmer, then reappears behind your last position.", kind: "float" },
     npc: { id: "edda", name: "Edda", role: "Keeper of Names", line: "I can recite every name here. I cannot remember which one was mine.", quest: "the-name-without-ink" },
-    lore: { id: "lore_names", title: "A Name Spoken Once", text: "Say the name even if no one answers. The saying is already a kind of return.", x: 8 },
-    shrine: { id: "shrine_frost", x: -8, title: "Blueglass Rest" },
+    lore: { id: "lore_names", title: "A Name Spoken Once", text: "Say the name even if no one answers. The saying is already a kind of return.", x: -6.5 },
+    shrine: { id: "shrine_frost", x: -9.7, title: "Blueglass Rest" },
   },
   {
     id: "frost_glass_causeway", title: "Glass Causeway", region: "frost", chapter: 3,
@@ -245,7 +245,7 @@ export const WORLD_ROOMS: CampaignRoom[] = [
     exits: [{ x: -13.1, target: "frost_hushed_throne", label: "Frostglass" }, { x: 13.1, target: "astral_orbit_gallery", label: "Orbit Gallery", ability: "double-jump" }],
     enemy: { id: "star_construct", name: "Star Construct", hp: 96, pattern: "The construct draws a bright line in the air, then fires along that line.", kind: "float" },
     npc: { id: "nym", name: "Nym", role: "Star Cartographer", line: "My map ends here. I have mistaken an unfinished map for a finished world.", quest: "the-blank-constellation" },
-    lore: { id: "lore_atlas", title: "The Map That Waited", text: "The final mark is not a destination. It is the place where another traveller begins.", x: 8 },
+    lore: { id: "lore_atlas", title: "The Map That Waited", text: "The final mark is not a destination. It is the place where another traveller begins.", x: -6.5 },
     shrine: { id: "shrine_astral", x: -8, title: "Orbit Rest" },
   },
   {
