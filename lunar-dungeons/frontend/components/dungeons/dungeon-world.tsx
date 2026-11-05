@@ -96,6 +96,69 @@ function BiomeScenery({ tier, color }: { tier: number; color: string }) {
         <planeGeometry args={[30, 15]} />
         <meshBasicMaterial color={palette.fog} transparent opacity={0.42} />
       </mesh>
+      {tier === 1 && (
+        <group position={[0, 0, -1.52]}>
+          {[-11, -4, 4, 11].map((x, index) => (
+            <group key={x} position={[x, 0, 0]}>
+              <mesh position={[0, 0.6, 0]} rotation={[0, 0, index % 2 ? -0.22 : 0.22]}>
+                <boxGeometry args={[0.28, 5.5, 0.16]} />
+                <meshBasicMaterial color={palette.silhouette} />
+              </mesh>
+              <mesh position={[index % 2 ? -0.9 : 0.9, 1.45, 0]} rotation={[0, 0, index % 2 ? 0.35 : -0.35]}>
+                <boxGeometry args={[2.4, 0.2, 0.14]} />
+                <meshBasicMaterial color={palette.silhouette} />
+              </mesh>
+            </group>
+          ))}
+          {[-8, 0, 8].map((x) => (
+            <group key={x} position={[x, -3.8, -0.05]}>
+              <mesh position={[0, 0.25, 0]}><cylinderGeometry args={[0.12, 0.12, 0.42, 4]} /><meshBasicMaterial color={palette.wall} /></mesh>
+              <mesh position={[0, 0.56, 0]}><sphereGeometry args={[0.38, 5, 4]} /><meshBasicMaterial color={palette.dust} transparent opacity={0.62} /></mesh>
+            </group>
+          ))}
+        </group>
+      )}
+      {tier === 2 && (
+        <group position={[0, 0, -1.48]}>
+          {[-10, -3, 5, 12].map((x, index) => (
+            <group key={x} position={[x, -1.2, 0]}>
+              <mesh><boxGeometry args={[0.72, 6 + (index % 2), 0.2]} /><meshBasicMaterial color={palette.silhouette} /></mesh>
+              <mesh position={[0, 0.2, 0.14]}><boxGeometry args={[0.16, 3.4, 0.08]} /><meshBasicMaterial color={color} transparent opacity={0.38} /></mesh>
+            </group>
+          ))}
+          <mesh position={[0, -5.4, 0.08]}><boxGeometry args={[28, 0.18, 0.12]} /><meshBasicMaterial color={color} transparent opacity={0.48} /></mesh>
+        </group>
+      )}
+      {tier === 3 && (
+        <group position={[0, 0, -1.48]}>
+          {[-12, -7, -2, 4, 9, 13].map((x, index) => (
+            <group key={x} position={[x, -3.5, 0]} rotation={[0, 0, index % 2 ? 0.1 : -0.08]}>
+              <mesh><coneGeometry args={[0.8 + (index % 3) * 0.2, 4 + (index % 2), 4]} /><meshBasicMaterial color={palette.wall} transparent opacity={0.7} /></mesh>
+              <mesh position={[0, 0.1, 0.14]}><boxGeometry args={[0.12, 2.3, 0.08]} /><meshBasicMaterial color={palette.dust} transparent opacity={0.5} /></mesh>
+            </group>
+          ))}
+        </group>
+      )}
+      {tier === 4 && (
+        <group position={[0, 0, -1.5]}>
+          {[0, 1, 2, 3].map((index) => (
+            <mesh key={index} position={[-9 + index * 6, 2 - (index % 2) * 3, 0]} rotation={[0.5, 0.2, index * 0.36]}>
+              <torusGeometry args={[1.6 + (index % 2) * 0.6, 0.045, 3, 12]} />
+              <meshBasicMaterial color={palette.dust} transparent opacity={0.42} />
+            </mesh>
+          ))}
+        </group>
+      )}
+      {tier === 5 && (
+        <group position={[0, 0, -1.48]}>
+          {Array.from({ length: 12 }, (_, index) => (
+            <mesh key={index} position={[-13 + (index % 6) * 5.1, -4.5 + Math.floor(index / 6) * 8, 0]} rotation={[0.2, 0.45, index * 0.23]}>
+              <boxGeometry args={[0.38 + (index % 3) * 0.18, 1.2 + (index % 4) * 0.35, 0.2]} />
+              <meshBasicMaterial color={palette.wall} transparent opacity={0.72} />
+            </mesh>
+          ))}
+        </group>
+      )}
       {landmarks.map((landmark) => (
         <group key={landmark.key} position={[landmark.x, landmark.y, -1.78]}>
           <mesh>

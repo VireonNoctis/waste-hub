@@ -286,3 +286,7 @@
   .ld-chronicle-grid { grid-template-columns: 1fr; }
   .ld-boss-state, .ld-infinity-affix { align-items: flex-start; flex-direction: column; gap: 5px; }
 }
+
+.ld-chronicle-guide { display: grid; gap: 7px; }
+.ld-chronicle-guide span + span { color: #d4b98e; }
+.ld-chronicle-guide p { margin: 2px 0 0; color: #a9c3b0; font: italic 10px/1.55 ui-serif, Georgia, serif; }

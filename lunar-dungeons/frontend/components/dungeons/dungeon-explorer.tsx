@@ -306,7 +306,13 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
                     </div>
                     <h3>{unlocked ? chapter.title : "A chapter beyond the mist"}</h3>
                     <p>{unlocked ? chapter.summary : "Reach this realm to uncover the next part of the story."}</p>
-                    {unlocked && <div className="ld-chronicle-guide">GUIDE · {chapter.companion}</div>}
+                    {unlocked && (
+                      <div className="ld-chronicle-guide">
+                        <span>GUIDE · {chapter.companion}</span>
+                        <span>FINAL WARDEN · {chapter.boss}</span>
+                        <p>{chapter.companionLine}</p>
+                      </div>
+                    )}
                     {restored && (
                       <div className="ld-memory-fragment">
                         <span><BookOpen size={12} /> MEMORY RESTORED · {chapter.memoryTitle}</span>

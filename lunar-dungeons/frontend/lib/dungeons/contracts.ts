@@ -70,6 +70,7 @@ export interface DungeonChronicleChapter {
   title: string
   region: string
   companion: string
+  companionLine: string
   boss: string
   startStage: number
   endStage: number
@@ -88,6 +89,7 @@ export const DUNGEON_CHRONICLE: DungeonChronicleChapter[] = [
     title: "The Bell Beneath the Briars",
     region: "Mosslight Wilds",
     companion: "Iri, the moth archivist",
+    companionLine: "Iri: “The forest remembers every footstep. Walk gently.”",
     boss: "The Verdant Colossus",
     startStage: 1,
     endStage: 160,
@@ -101,6 +103,7 @@ export const DUNGEON_CHRONICLE: DungeonChronicleChapter[] = [
     title: "A Furnace for the Fallen",
     region: "Ember Hollow",
     companion: "Vey, the ash-smith",
+    companionLine: "Vey: “A flame can warm a name without consuming it.”",
     boss: "The Ember Sovereign",
     startStage: 161,
     endStage: 320,
@@ -114,6 +117,7 @@ export const DUNGEON_CHRONICLE: DungeonChronicleChapter[] = [
     title: "The Names Beneath the Ice",
     region: "Frostglass Vale",
     companion: "Edda, keeper of names",
+    companionLine: "Edda: “Speak the names you find. The ice listens.”",
     boss: "The Hollow Monarch",
     startStage: 321,
     endStage: 480,
@@ -127,6 +131,7 @@ export const DUNGEON_CHRONICLE: DungeonChronicleChapter[] = [
     title: "The Map That Lied",
     region: "Astral Archive",
     companion: "Nym, the star cartographer",
+    companionLine: "Nym: “Stars are not directions. They are promises.”",
     boss: "The Astral Warden",
     startStage: 481,
     endStage: 640,
@@ -140,6 +145,7 @@ export const DUNGEON_CHRONICLE: DungeonChronicleChapter[] = [
     title: "The Last Light Remembered",
     region: "The Quiet Void",
     companion: "Iri, carrying the first lantern",
+    companionLine: "Iri: “If you remember me, I will remember the way home.”",
     boss: "The Quiet King",
     startStage: 641,
     endStage: 800,
