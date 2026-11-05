@@ -342,7 +342,22 @@ export const BOSS_UNLOCKS: Record<string, string> = {
 }
 
 export const LUNAR_ENDINGS = [
-  { id: "shared-light", title: "The Shared Light", description: "Return the Lumen to the people. No single keeper owns the night." },
-  { id: "quiet-keeper", title: "The Quiet Keeper", description: "Keep the Quiet sealed, but carry the burden together with Iri and Orin." },
-  { id: "open-sky", title: "The Open Sky", description: "Release the Lumen into the sky. The old Moonwake ends, and every kingdom begins its own dawn." },
+  {
+    id: "shared-light",
+    title: "The Shared Light",
+    description: "Return the Lumen to the people. No single keeper owns the night.",
+    epilogue: "The notes leave the Moonheart and settle in the hands of the kingdoms. Mosslight keeps one in its oldest tree; Ember Hollow places one above the public hearth; Edda carries one through the name library; Nym charts the last two as a constellation that can be seen from every roof. Moonwake becomes a meeting place, not a throne. Iri hangs her lantern in the observatory window. It is no longer a beacon asking someone to return. It is a welcome that belongs to everyone.",
+  },
+  {
+    id: "quiet-keeper",
+    title: "The Quiet Keeper",
+    description: "Keep the Quiet sealed, but carry the burden together with Iri and Orin.",
+    epilogue: "The Lumen remains beneath the observatory, but the door is no longer guarded by one forgotten name. Orin teaches the old watch to Iri; Iri teaches it to the Wayfarer; and each kingdom sends someone to keep the lanterns lit in turn. The Quiet stays beyond the threshold, heard but not feared. Moonwake keeps its vigil, and for the first time the keeper is never alone.",
+  },
+  {
+    id: "open-sky",
+    title: "The Open Sky",
+    description: "Release the Lumen into the sky. The old Moonwake ends, and every kingdom begins its own dawn.",
+    epilogue: "The five notes rise beyond the broken observatory and become a new moon, bright enough to be seen even beneath the deepest roots. The old city loosens into silver dust and drifts across the kingdoms like a slow snowfall. Orin walks into the morning without a title. Iri follows the moth-lights into the wide world. There is no central lantern now. Every window becomes one.",
+  },
 ]
