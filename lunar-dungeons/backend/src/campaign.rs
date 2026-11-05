@@ -46,6 +46,7 @@ struct ActiveBoss {
 struct CampaignState {
     current_room: String,
     checkpoint_room: String,
+    visited_rooms: Vec<String>,
     unlocked_abilities: Vec<String>,
     discovered_lore: Vec<String>,
     discovered_secrets: Vec<String>,
@@ -64,6 +65,7 @@ impl Default for CampaignState {
         Self {
             current_room: "moonwake_observatory".to_string(),
             checkpoint_room: "moonwake_observatory".to_string(),
+            visited_rooms: vec!["moonwake_observatory".to_string()],
             unlocked_abilities: Vec::new(),
             discovered_lore: Vec::new(),
             discovered_secrets: Vec::new(),
@@ -330,6 +332,9 @@ async fn update_campaign(
                 return Err(ApiError::new(axum::http::StatusCode::FORBIDDEN, "That gate is still sealed. Complete the previous realm's warden first."));
             }
             campaign.current_room = room.to_string();
+            if !campaign.visited_rooms.iter().any(|visited| visited == room) {
+                campaign.visited_rooms.push(room.to_string());
+            }
             campaign.active_boss = boss_for_room(room)
                 .filter(|boss| !campaign.bosses_defeated.iter().any(|defeated| defeated == boss))
                 .map(|boss| ActiveBoss {
