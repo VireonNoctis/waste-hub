@@ -50,7 +50,7 @@ jobs:
               "isolatedModules": true,
               "jsx": "preserve",
               "paths": {
-                "@/*": ["lunar-dungeons/frontend/*"]
+                "@/*": ["./lunar-dungeons/frontend/*"]
               }
             },
             "include": ["lunar-dungeons/frontend/**/*.ts", "lunar-dungeons/frontend/**/*.tsx"],
