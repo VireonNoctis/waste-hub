@@ -328,7 +328,7 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
           </section>
         )}
 
-        {error && <div className="ld-alert" role="alert"><span>{error}</span><button onClick={() => setError(null)} aria-label="Dismiss error"><X size={15} /></button></div> role="alert"><span>{error}</span><button onClick={() => setError(null)} aria-label="Dismiss error"><X size={15} /></button></div>}
+        {error && <div className="ld-alert" role="alert"><span>{error}</span><button onClick={() => setError(null)} aria-label="Dismiss error"><X size={15} /></button></div>}
         {notice && (!battle || battle.status !== "active") && <div className="ld-notice"><Check size={16} /> {notice}</div>}
 
         {loading ? (
