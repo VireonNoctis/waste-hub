@@ -202,6 +202,29 @@ fn bestiary_key_is_known(key: &str) -> bool {
     )
 }
 
+
+fn bestiary_is_in_room(key: &str, room: &str) -> bool {
+    matches!(
+        (key, room),
+        ("mossling", "mosslight_bell_garden")
+            | ("thorn_sprite", "mosslight_root_archive")
+            | ("verdant_colossus", "mosslight_briar_well")
+            | ("cinder_wisp", "ember_cinder_market")
+            | ("ash_hound", "ember_slag_bridge")
+            | ("ember_sovereign", "ember_last_hearth")
+            | ("frost_echo", "frost_name_library")
+            | ("glacier_warden", "frost_glass_causeway")
+            | ("hollow_monarch", "frost_hushed_throne")
+            | ("star_construct", "astral_scriptorium")
+            | ("astral_drake", "astral_orbit_gallery")
+            | ("astral_warden", "astral_first_star")
+            | ("quietling", "quiet_hushwater")
+            | ("eclipse_shade", "quiet_echo_court")
+            | ("orin_first_keeper", "quiet_moonheart")
+            | ("eclipse_warden", "moonwake_underlight")
+    )
+}
+
 fn quest_choices(key: &str) -> Option<&'static [&'static str]> {
     match key {
         "the-unlit-lantern" => Some(&["Trust Iri with the lantern", "Keep the lantern close for now"]),
@@ -305,6 +328,9 @@ async fn update_campaign(
             let key = event.key.as_deref().unwrap_or_default();
             if !bestiary_key_is_known(key) {
                 return Err(ApiError::new(axum::http::StatusCode::BAD_REQUEST, "Unknown bestiary entry."));
+            }
+            if !bestiary_is_in_room(key, &campaign.current_room) {
+                return Err(ApiError::new(axum::http::StatusCode::FORBIDDEN, "That creature is not in your current room."));
             }
             if !campaign.bestiary.iter().any(|item| item == key) {
                 campaign.bestiary.push(key.to_string());
