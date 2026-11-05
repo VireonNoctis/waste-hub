@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: 24
       - name: Install feature dependencies
-        run: npm install --no-save typescript@latest next@latest react@latest react-dom@latest @types/react@latest @types/react-dom@latest three@latest @types/three@latest @react-three/fiber@latest lucide-react@latest
+        run: npm install --no-save typescript@latest next@latest react@latest react-dom@latest @types/react@latest @types/react-dom@latest @types/node@latest three@latest @types/three@latest @react-three/fiber@latest lucide-react@latest
       - name: Create temporary TypeScript config
         run: |
           cat > tsconfig.lunar.json <<'EOF'
