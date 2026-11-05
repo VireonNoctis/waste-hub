@@ -122,6 +122,7 @@ function WorldBackdrop({ room }: { room: CampaignRoom }) {
 interface LiveSceneProps {
   room: CampaignRoom
   enemyEnabled: boolean
+  serverBossHp: number | null
   abilities: string[]
   foundLore: string[]
   foundSecrets: string[]
@@ -144,7 +145,6 @@ function LiveScene({
   const enemyRef = useRef<THREE.Group>(null)
   const warningRef = useRef<THREE.Mesh>(null)
   const reportedBestiary = useRef(false)
-  const reportedBoss = useRef(false)
   const eventCooldown = useRef(0)
   const game = useRef({
     x: room.spawn, y: -3.7, vx: 0, vy: 0, facing: 1, hp: 100,
@@ -173,7 +173,6 @@ function LiveScene({
     current.enemyAlive = enemyEnabled
     current.lastAttack = -2
     reportedBestiary.current = false
-    reportedBoss.current = false
   }, [room.id, enemyEnabled])
 
   useFrame((state, rawDelta) => {
@@ -675,7 +674,7 @@ export default function DungeonLiveWorld() {
 
   const saveWorldEvent = useCallback(async (action: "lore" | "secret" | "bestiary" | "boss-hit", key: string) => {
     try {
-      await applyEvent({ action, key })
+      const next = await applyEvent({ action, key })
       const bossWon = action === "boss-hit" && next.bossesDefeated.includes(key)
       const copy = action === "lore" ? "Memory added to your Chronicle."
         : action === "secret" ? "A hidden mark answers the lantern."
@@ -898,6 +897,7 @@ export default function DungeonLiveWorld() {
             <LiveScene
               room={room}
               enemyEnabled={!!activeEnemy}
+              serverBossHp={campaign?.activeBoss?.id === room.enemy?.id ? campaign.activeBoss.hp : null}
               abilities={abilities}
               foundLore={campaign?.discoveredLore ?? []}
               foundSecrets={campaign?.discoveredSecrets ?? []}
