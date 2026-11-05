@@ -81,83 +81,83 @@ export interface DungeonChronicleChapter {
 }
 
 export const DUNGEON_PROLOGUE =
-  "When the moon above Aster dimmed, its light did not disappear. It fell beneath the world and broke into five notes. The silence that followed began hollowing out every living memory. A lone Wayfarer follows a small lantern through the buried kingdom, searching for the bellkeeper who first heard the silence."
+  "Before the first sunrise, there was Moonwake: a silver city built around a quiet observatory, where the people listened to the moon as if it were a living archive. When the Quiet arrived—not darkness, but the absence of being remembered—Orin, the First Keeper, broke the Lumen into five lunar notes and hid them in five kingdoms below the city. You wake beneath the observatory with a lantern that has no flame. Iri, a moth archivist with a star stitched into her wing, knows the lantern. She will not yet tell you why. The old atlas promises a throne at the end of the descent. The lantern promises something smaller: someone is waiting to be remembered."
 
 export const DUNGEON_CHRONICLE: DungeonChronicleChapter[] = [
   {
     id: 1,
-    title: "The Bell Beneath the Briars",
+    title: "A Lantern Without a Flame",
     region: "Mosslight Wilds",
     companion: "Iri, the moth archivist",
     companionLine: "Iri: “The forest remembers every footstep. Walk gently.”",
     boss: "The Verdant Colossus",
     startStage: 1,
     endStage: 160,
-    summary: "Iri's lantern leads you below a kingdom where roots have swallowed the roads. The forest's creatures attack as if following a command older than the trees. Somewhere beneath the oldest grove, a bell keeps ringing with no hand to move it.",
-    revelation: "The first warden rang the bell to warn the world, not to summon the silence. The roots have been holding the warning in place for centuries.",
-    memoryTitle: "The First Note",
-    memoryText: "When the moon went quiet, the roots kept singing."
+    summary: "The Wayfarer wakes beneath Moonwake Observatory. Iri leads them into the Mosslight Wilds, where roots have grown around a buried bell. The creatures here do not hunt for food. They guard the bell as if it were a sleeping heart.",
+    revelation: "The bell was never rung to summon the Quiet. The First Keeper rang it to warn the kingdoms that memory itself was under attack. The forest has kept the warning alive by growing around it.",
+    memoryTitle: "A Path Remembered",
+    memoryText: "A path is not lost while someone remembers where it began."
   },
   {
     id: 2,
-    title: "A Furnace for the Fallen",
+    title: "The Hearth That Kept the Dark",
     region: "Ember Hollow",
     companion: "Vey, the ash-smith",
     companionLine: "Vey: “A flame can warm a name without consuming it.”",
     boss: "The Ember Sovereign",
     startStage: 161,
     endStage: 320,
-    summary: "In the city beneath the cinders, every furnace burns a memory instead of fuel. Vey remembers a promise made by the miners: keep one ember alive until the missing moonlight can find its way home.",
-    revelation: "The Ember Sovereign fed the city its own memories to keep the Moonheart burning. The fire was never a weapon; it was a final act of shelter.",
-    memoryTitle: "A Warm Place",
-    memoryText: "A home is not the walls that remain. It is the name someone keeps for you."
+    summary: "Ember Hollow is a city of violet soot and pale gold windows. Its furnaces burn memories instead of coal. Vey, the last ash-smith, has kept one small hearth alight for a visitor whose face has faded from every portrait.",
+    revelation: "The Ember Sovereign fed the city its own memories to keep the Lumen warm. The fire was an act of shelter, not conquest. Vey's forgotten promise was made to Orin, not to a king.",
+    memoryTitle: "The Hearthlight",
+    memoryText: "A home is the name someone saves a place for."
   },
   {
     id: 3,
-    title: "The Names Beneath the Ice",
+    title: "The Library of Unsaid Names",
     region: "Frostglass Vale",
     companion: "Edda, keeper of names",
     companionLine: "Edda: “Speak the names you find. The ice listens.”",
     boss: "The Hollow Monarch",
     startStage: 321,
     endStage: 480,
-    summary: "The frozen choir sings names that no living person can remember. Edda asks you to listen rather than fight the echoes. The deeper you travel, the more the ice begins to answer in familiar voices.",
-    revelation: "The Hollow Monarch is the last keeper of the kingdom's names. Its silence protected the people from being erased, even as it trapped their memories in the ice.",
-    memoryTitle: "The Names We Keep",
-    memoryText: "A name spoken with care is a light the dark cannot swallow."
+    summary: "Beneath a blue-white aurora, Frostglass keeps a library of names that no living voice can pronounce. Edda has memorised every shelf, but cannot remember her own. The ice answers questions with voices borrowed from the past.",
+    revelation: "The Hollow Monarch trapped memories in ice to keep them from the Quiet. It mistook stillness for safety. The names are not asking to remain untouched; they are asking to be spoken again.",
+    memoryTitle: "The Name Returned",
+    memoryText: "A name is not a cage. It is a door someone may choose to open."
   },
   {
     id: 4,
-    title: "The Map That Lied",
+    title: "An Atlas of Impossible Stars",
     region: "Astral Archive",
     companion: "Nym, the star cartographer",
     companionLine: "Nym: “Stars are not directions. They are promises.”",
     boss: "The Astral Warden",
     startStage: 481,
     endStage: 640,
-    summary: "Nym's star charts reveal that every road in the archive bends toward the same sealed chamber. The five wardens were not corrupted guardians. They drew the map that led the silence away from the surface.",
+    summary: "The Astral Archive is suspended above an endless midnight sea. Its orreries turn without hands and its constellations rearrange themselves when watched. Nym has drawn the same map for a thousand years, always leaving one final room blank.",
     revelation: "The wardens divided the Moonheart into five notes and hid them across the realms. The map was designed to bring one worthy traveller to the truth, not to the throne.",
-    memoryTitle: "The Hidden Route",
-    memoryText: "A map can show the way. Only a heart can decide why the journey matters."
+    memoryTitle: "The Blank Constellation",
+    memoryText: "A star is not a command. It is a direction you may choose."
   },
   {
     id: 5,
-    title: "The Last Light Remembered",
+    title: "The Quiet Between Heartbeats",
     region: "The Quiet Void",
     companion: "Iri, carrying the first lantern",
     companionLine: "Iri: “If you remember me, I will remember the way home.”",
     boss: "The Quiet King",
     startStage: 641,
     endStage: 800,
-    summary: "At the edge of the world, the silence finally speaks. The Quiet King waits beside the broken Moonheart, guarding a truth that has outlived the kingdom that created it. Iri's lantern begins to remember its first owner.",
-    revelation: "The Quiet King is Orin, the first bellkeeper. Orin bound the silence inside the Moonheart and erased their own name to keep it there. The final battle is about returning every stolen memory to the world.",
-    memoryTitle: "The Moon Remembers",
-    memoryText: "The night did not end when the moon went dark. It ended when someone remembered how to carry the light."
+    summary: "The Quiet Beyond has no horizon. Rooms appear only when someone remembers them. Iri's lantern begins to glow without a flame, and the Wayfarer hears a voice that knows every step they have taken. At the end waits Orin, who has guarded the silence for so long that even their own name became a locked door.",
+    revelation: "Orin did not become the Quiet. Orin bound it inside the broken Lumen and gave up their name to keep the world from being erased. The final encounter is not a trial of strength, but a choice about whether memory should be held by one keeper or shared by everyone.",
+    memoryTitle: "The Shared Moon",
+    memoryText: "Light is not made smaller by being shared."
   }
 ]
 
 export const DUNGEON_ENDING =
-  "The five notes return to the Moonheart. Across Aster, roots loosen, furnaces cool, and names rise from the ice. Iri sets the lantern beside the first bell. Orin is remembered at last—not as a king, but as the keeper who waited for someone to come home. The moon does not become as it was. It becomes something the living can share again."
+  "The five notes return, not to restore the old Moonwake, but to let the world choose what comes after it. Mosslight grows through the observatory's broken glass. The last Ember furnace becomes a hearth. The names beneath Frostglass are spoken aloud. Above the Astral Archive, stars return to their proper distances. Iri remembers her first name: Auralis. Orin remembers their own. The moon rises over a world that no longer needs one keeper to hold its light. Across the kingdoms, small lanterns answer one another. For the first time in an age, the night belongs to everyone."
 
 export const DUNGEON_TIERS: DungeonTier[] = [
   {
