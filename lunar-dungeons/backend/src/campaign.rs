@@ -118,7 +118,7 @@ fn connected_rooms(from: &str, to: &str) -> bool {
 }
 
 fn region_is_open(room: &str, state: &CampaignState) -> bool {
-    if room.starts_with("moonwake_") || room.starts_with("mosslight_") {
+    if room == "moonwake_observatory" || room.starts_with("mosslight_") {
         return true;
     }
     if room.starts_with("ember_") {
