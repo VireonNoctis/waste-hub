@@ -460,7 +460,7 @@ function LiveScene({
           if (p.enemyHp <= 0) p.enemyAlive = false
         }
       }
-    }    } else if (pressed.has("attack")) {
+    } else if (pressed.has("attack")) {
       p.lastAttack = state.clock.elapsedTime
     }
 
