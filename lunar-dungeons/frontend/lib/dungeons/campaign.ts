@@ -1,5 +1,5 @@
 export type CampaignRegion = "moonwake" | "mosslight" | "ember" | "frost" | "astral" | "quiet" | "underlight"
-export type CampaignEventKind = "room" | "checkpoint" | "lore" | "secret" | "bestiary" | "quest" | "boss" | "ending" | "settings"
+export type CampaignEventKind = "room" | "checkpoint" | "respawn" | "lore" | "secret" | "bestiary" | "quest" | "boss" | "ending" | "settings"
 
 export interface AccessibilitySettings {
   reducedMotion: boolean
