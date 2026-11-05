@@ -13,6 +13,8 @@ use sqlx::{FromRow, SqlitePool, sqlite::{SqliteConnectOptions, SqliteJournalMode
 use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
 
+mod campaign;
+
 const STANDARD_STAGE_LIMIT: i64 = 800;
 const PLAYER_MAX_HP: i64 = 150;
 
@@ -732,6 +734,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/dungeons/attempts", post(start_attempt))
         .route("/api/dungeons/attempts/{attempt_id}/turn", post(take_turn))
         .route("/api/dungeons/attempts/{attempt_id}", delete(abandon_attempt))
+        .merge(campaign::routes())
         .with_state(state);
 
     let address: SocketAddr = env::var("BIND_ADDRESS")
