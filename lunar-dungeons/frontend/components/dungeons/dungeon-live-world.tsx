@@ -47,8 +47,9 @@ const EMPTY_HUD: HudState = {
 }
 
 function displayKey(code: string) {
+  const arrows: Record<string, string> = { ArrowLeft: "←", ArrowRight: "→", ArrowUp: "↑", ArrowDown: "↓" }
   if (code === "Space") return "SPACE"
-  return code.replace(/^Key/, "").replace(/^Arrow/, "←/").replace(/^Digit/, "")
+  return arrows[code] ?? code.replace(/^Key/, "").replace(/^Digit/, "")
 }
 
 function PlayerSprite({ playerRef }: { playerRef: MutableRefObject<THREE.Group | null> }) {
