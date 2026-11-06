@@ -130,3 +130,20 @@ The route is:
 - Defeating Orin opens three final choices: Shared Light, Quiet Keeper, or Open Sky.
 
 The real-time platform physics and ordinary enemy encounters are client-simulated for responsive controls. Rust persists the campaign and validates connected room changes, realm gates, lore/secret/bestiary locations, quest choices, shrines, and boss encounter hits. The server does not run a frame-by-frame physics simulation. The original 800-stage atlas remains beneath the new campaign, with its existing onVictory reward handoff untouched.
+
+## 7. Fullscreen launch, platforming polish, and expanded chronicle
+
+The Moonwake side-scroller now begins behind an explicit **Enter the Moonwake** launch screen. Starting the game requests fullscreen from that user gesture (browsers require a direct interaction); if fullscreen is unsupported or blocked, the campaign remains playable in the normal page. The in-game expand control enters or exits fullscreen, and Escape pauses the adventure.
+
+Platforming input includes a short coyote-time window after leaving a ledge and a buffered jump so a slightly early jump press is not discarded. The grapple art now selects the nearest elevated platform within range and has a short cooldown instead of applying an arbitrary vertical boost. Remapped key labels are reflected in the on-screen instructions, and touch input is released safely on pointer cancellation.
+
+Respawning now recreates the room scene as well as restoring the saved shrine location. This resets local enemy and movement state, preventing a defeated local enemy from remaining hidden after the player returns to a checkpoint.
+
+The in-game Chronicle now contains an expanded story bible:
+- The full five-act journey through Mosslight, Ember Hollow, Frostglass Vale, Astral Archive, and the Quiet Beyond.
+- Deeper explanations of the Lumen, the five notes, the Quiet, and the sixth note: the margin.
+- Character histories and arcs for Iri/Auralis, Vey, Edda, Nym, Orin, and the Wayfarer.
+- The five secret memories and what each reveals about the world.
+- Expanded descriptions of all three endings, with the selected ending and companion bond reflected in the Chronicle.
+
+The campaign's server-owned save format and event contract remain unchanged by this frontend/story expansion. The platform physics and ordinary enemy movement are still client-simulated; room transitions, checkpoints, discoveries, quests, boss health, unlocked movement arts, and ending choices continue to be persisted and validated by the Rust API.
