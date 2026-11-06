@@ -268,6 +268,9 @@ function LiveScene({
       if (!enemyEnabled) {
         current.enemyAlive = false
         current.enemyHp = 0
+      } else if (room.enemy?.kind === "boss" && serverBossHp !== null) {
+        current.enemyHp = serverBossHp
+        current.enemyAlive = serverBossHp > 0
       }
       return
     }
