@@ -334,3 +334,64 @@
 @media (max-width: 680px) {
   .ld-mode-nav { grid-template-columns: 1fr; }
 }
+
+
+.ld-atlas-story-backdrop {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(5, 7, 17, .82);
+  backdrop-filter: blur(8px);
+}
+.ld-atlas-story-modal {
+  position: relative;
+  width: min(620px, 100%);
+  max-height: min(84vh, 760px);
+  overflow-y: auto;
+  padding: clamp(20px, 4vw, 34px);
+  color: #e9e6fa;
+  border: 1px solid rgba(193, 184, 232, .55);
+  background: radial-gradient(ellipse at 90% 0, rgba(127, 108, 180, .2), transparent 48%), #11172a;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .5), 0 0 0 5px rgba(184, 173, 231, .05);
+  animation: ld-atlas-story-arrive .3s ease both;
+}
+.ld-atlas-story-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: #c9c4e5;
+  border: 1px solid rgba(188, 180, 229, .28);
+  background: rgba(9, 13, 27, .6);
+  cursor: pointer;
+}
+.ld-atlas-story-region { display: block; margin-top: 17px; color: #aeb1d0; font: 800 8px ui-monospace, monospace; letter-spacing: .14em; }
+.ld-atlas-story-modal h2 { max-width: 500px; margin: 9px 0 13px; color: #f2efff; font: 850 clamp(25px, 4vw, 37px)/1.05 ui-serif, Georgia, serif; letter-spacing: -.04em; }
+.ld-atlas-story-modal > p { color: #c0c2d9; font: 12px/1.8 ui-serif, Georgia, serif; }
+.ld-atlas-story-modal blockquote { margin: 13px 0; padding: 12px 15px; color: #e2def7; border-left: 2px solid #b8addf; background: rgba(180, 167, 229, .08); font: italic 12px/1.75 ui-serif, Georgia, serif; }
+.ld-atlas-story-memory { display: grid; gap: 7px; margin: 15px 0; padding: 12px; border: 1px solid rgba(181, 174, 228, .17); background: rgba(8, 12, 25, .52); }
+.ld-atlas-story-memory strong { color: #d5ceef; font: 800 8px ui-monospace, monospace; letter-spacing: .12em; }
+.ld-atlas-story-memory span { color: #bfc4d9; font: italic 12px/1.6 ui-serif, Georgia, serif; }
+.ld-atlas-story-modal > a {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 4px;
+  padding: 10px 12px;
+  color: #18182a;
+  border: 1px solid #e4dcff;
+  background: linear-gradient(100deg, #d8d0f4, #b9e6d7);
+  box-shadow: 3px 3px 0 #635c89;
+  font: 900 8px ui-monospace, monospace;
+  letter-spacing: .08em;
+  text-decoration: none;
+}
+.ld-atlas-story-continue { display: block; margin-top: 14px; padding: 8px 0; color: #acaed0; border: 0; background: transparent; cursor: pointer; font: 800 8px ui-monospace, monospace; letter-spacing: .1em; }
+.ld-atlas-story-modal a:focus-visible, .ld-atlas-story-continue:focus-visible, .ld-atlas-story-close:focus-visible { outline: 2px solid #e2dcff; outline-offset: 3px; }
+@keyframes ld-atlas-story-arrive { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .ld-atlas-story-modal { animation: none; } }

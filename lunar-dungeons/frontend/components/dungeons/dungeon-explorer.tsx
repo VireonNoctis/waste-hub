@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic"
 import Link from "next/link"
+import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { CSSProperties } from "react"
 import {
@@ -112,6 +113,7 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
   const [notice, setNotice] = useState<string | null>(null)
   const [showRules, setShowRules] = useState(false)
   const [showChronicle, setShowChronicle] = useState(false)
+  const [storyMilestone, setStoryMilestone] = useState<(typeof DUNGEON_CHRONICLE)[number] | null>(null)
 
   const currentTier = DUNGEON_TIERS[Math.min(4, selectedTier)]
   const currentRange = formatTierProgress(currentTier, progress)
@@ -215,6 +217,10 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
         setNotice(response.battle.mode === "infinity"
           ? `Infinity depth ${response.victory.depth} cleared. The next depth is ready.`
           : `${stageLabel(response.victory.stage)} cleared. Your route has advanced.`)
+        const chapter = response.victory.mode === "standard"
+          ? DUNGEON_CHRONICLE.find((item) => item.endStage === response.victory?.stage)
+          : undefined
+        if (chapter) setStoryMilestone(chapter)
         onVictory?.(response.victory)
       } else if (response.defeated) {
         setNotice("Your run ended here. You can retry this stage from the map.")
@@ -543,6 +549,21 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
               </section>
             )}
           </>
+        )}
+        {storyMilestone && (
+          <div className="ld-atlas-story-backdrop" role="presentation">
+            <section className="ld-atlas-story-modal" role="dialog" aria-modal="true" aria-label={storyMilestone.title}>
+              <div className="ld-panel-kicker">ATLAS MILESTONE · CHAPTER RESTORED</div>
+              <button className="ld-atlas-story-close" onClick={() => setStoryMilestone(null)} aria-label="Close chapter"><X size={16} /></button>
+              <span className="ld-atlas-story-region">{storyMilestone.region.toUpperCase()} · {stageLabel(storyMilestone.endStage)} CLEARED</span>
+              <h2>{storyMilestone.title}</h2>
+              <p>{storyMilestone.summary}</p>
+              <blockquote>{storyMilestone.revelation}</blockquote>
+              <div className="ld-atlas-story-memory"><strong>{storyMilestone.memoryTitle}</strong><span>“{storyMilestone.memoryText}”</span></div>
+              <Link href={`/dungeons/story?volume=${["act-one", "act-two", "act-three", "act-four", "act-five"][storyMilestone.id - 1]}`}>READ THE FULL CHAPTER ↗</Link>
+              <button className="ld-atlas-story-continue" onClick={() => setStoryMilestone(null)}>RETURN TO THE ATLAS</button>
+            </section>
+          </div>
         )}
         <footer className="ld-footer"><span>LUNAR DUNGEON ATLAS</span><span>800 STAGES · 5 TIERS · ONE ENDLESS FRONTIER</span><button onClick={() => void loadState()} disabled={loading || busy}><RotateCcw size={12} /> SYNC PROGRESS</button></footer>
       </div>

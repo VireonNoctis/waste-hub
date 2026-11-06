@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, BookOpen, ChevronLeft, ChevronRight, Sparkles } from "lucide-react"
-import { MOONWAKE_VOLUMES, type MoonwakeInlineRun, type MoonwakeStoryBlock } from "@/lib/dungeons/moonwake-story"
+import { type MoonwakeInlineRun, type MoonwakeStoryBlock } from "@/lib/dungeons/moonwake-story"
+import { MOONWAKE_READER_VOLUMES } from "@/lib/dungeons/moonwake-reader-index"
 
 function InlineText({ runs }: { runs: MoonwakeInlineRun[] }) {
   return (
@@ -39,11 +40,14 @@ export default function MoonwakeStoryReader() {
   const [reducedMotion, setReducedMotion] = useState(false)
   const bookRef = useRef<HTMLDivElement>(null)
   const proseRef = useRef<HTMLElement>(null)
-  const volume = MOONWAKE_VOLUMES[activeVolume]
-  const overallProgress = Math.round(((activeVolume + volumeProgress / 100) / MOONWAKE_VOLUMES.length) * 100)
+  const volume = MOONWAKE_READER_VOLUMES[activeVolume]
+  const overallProgress = Math.round(((activeVolume + volumeProgress / 100) / MOONWAKE_READER_VOLUMES.length) * 100)
 
   useEffect(() => {
     setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+    const requestedVolume = new URLSearchParams(window.location.search).get("volume")
+    const requestedIndex = MOONWAKE_READER_VOLUMES.findIndex((item) => item.id === requestedVolume)
+    if (requestedIndex >= 0) setActiveVolume(requestedIndex)
   }, [])
 
   useEffect(() => {
@@ -70,7 +74,7 @@ export default function MoonwakeStoryReader() {
   }, [activeVolume])
 
   const selectVolume = useCallback((index: number) => {
-    const next = Math.max(0, Math.min(MOONWAKE_VOLUMES.length - 1, index))
+    const next = Math.max(0, Math.min(MOONWAKE_READER_VOLUMES.length - 1, index))
     setActiveVolume(next)
     setVolumeProgress(0)
     window.requestAnimationFrame(() => {
@@ -100,7 +104,7 @@ export default function MoonwakeStoryReader() {
             <h1>A light is not made smaller by being shared.</h1>
             <p>Five kingdoms. Five notes. One unfinished promise. Follow the Wayfarer from the first light beneath the observatory to the choice that waits beyond the Quiet.</p>
             <button className="ld-story-start" onClick={() => selectVolume(0)}><BookOpen size={15} /> BEGIN THE TESTAMENT <ArrowRight size={15} /></button>
-            <div className="ld-story-stats"><span>05 ACTS</span><span>07 VOLUMES</span><span>4,972 STORY LINES</span></div>
+            <div className="ld-story-stats"><span>05 ACTS</span><span>13 VOLUMES</span><span>4,972 ORIGINAL LINES</span><span>6 MAP CHRONICLES</span></div>
           </div>
           <div className="ld-story-emblem" aria-hidden="true">
             <span className="ld-story-emblem-core">✦</span>
@@ -117,8 +121,8 @@ export default function MoonwakeStoryReader() {
 
         <div className="ld-story-workspace" ref={bookRef}>
           <aside className="ld-story-contents" aria-label="Choose a story volume">
-            <div className="ld-story-contents-head"><span>THE SEVEN VOLUMES</span><small>SELECT A CHAPTER</small></div>
-            {MOONWAKE_VOLUMES.map((item, index) => (
+            <div className="ld-story-contents-head"><span>THE TESTAMENT & MAP CHRONICLES</span><small>SELECT A CHAPTER</small></div>
+            {MOONWAKE_READER_VOLUMES.map((item, index) => (
               <button
                 key={item.id}
                 className={`ld-story-volume-choice ${activeVolume === index ? "is-active" : ""}`}
@@ -135,16 +139,16 @@ export default function MoonwakeStoryReader() {
 
           <section className="ld-story-book">
             <div className="ld-story-book-head">
-              <div><span>VOLUME {String(activeVolume).padStart(2, "0")} / 06</span><h2>{volume.title}</h2><p>{volume.subtitle}</p></div>
+              <div><span>VOLUME {String(activeVolume + 1).padStart(2, "0")} / {String(MOONWAKE_READER_VOLUMES.length).padStart(2, "0")}</span><h2>{volume.title}</h2><p>{volume.subtitle}</p></div>
               <button className="ld-story-focus-toggle" onClick={() => setFocusMode(value => !value)} aria-pressed={focusMode}>{focusMode ? "SHOW CONTENTS" : "FOCUS READING"}</button>
             </div>
             <article className="ld-story-prose ld-story-enter" ref={proseRef} key={volume.id}>
               {volume.blocks.map((block, index) => <StoryBlock key={index} block={block} index={index} />)}
             </article>
             <nav className="ld-story-chapter-controls" aria-label="Previous and next volume">
-              <button onClick={() => selectVolume(activeVolume - 1)} disabled={activeVolume === 0}><ChevronLeft size={15} /><span><small>PREVIOUS VOLUME</small><strong>{MOONWAKE_VOLUMES[activeVolume - 1]?.title ?? "Beginning"}</strong></span></button>
-              <span className="ld-story-page-mark">{String(activeVolume + 1).padStart(2, "0")} <i>/</i> {String(MOONWAKE_VOLUMES.length).padStart(2, "0")}</span>
-              <button className="is-next" onClick={() => selectVolume(activeVolume + 1)} disabled={activeVolume === MOONWAKE_VOLUMES.length - 1}><span><small>NEXT VOLUME</small><strong>{MOONWAKE_VOLUMES[activeVolume + 1]?.title ?? "The end"}</strong></span><ChevronRight size={15} /></button>
+              <button onClick={() => selectVolume(activeVolume - 1)} disabled={activeVolume === 0}><ChevronLeft size={15} /><span><small>PREVIOUS VOLUME</small><strong>{MOONWAKE_READER_VOLUMES[activeVolume - 1]?.title ?? "Beginning"}</strong></span></button>
+              <span className="ld-story-page-mark">{String(activeVolume + 1).padStart(2, "0")} <i>/</i> {String(MOONWAKE_READER_VOLUMES.length).padStart(2, "0")}</span>
+              <button className="is-next" onClick={() => selectVolume(activeVolume + 1)} disabled={activeVolume === MOONWAKE_READER_VOLUMES.length - 1}><span><small>NEXT VOLUME</small><strong>{MOONWAKE_READER_VOLUMES[activeVolume + 1]?.title ?? "The end"}</strong></span><ChevronRight size={15} /></button>
             </nav>
           </section>
         </div>

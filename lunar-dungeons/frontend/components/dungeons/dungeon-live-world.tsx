@@ -2,6 +2,7 @@
 
 import { Canvas, useFrame } from "@react-three/fiber"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import type { MutableRefObject } from "react"
 import * as THREE from "three"
 import { BookOpen, Heart, Map, Maximize2, Minimize2, Pause, Play, Settings2, ShieldCheck, Sparkles, Wind, X } from "lucide-react"
@@ -22,6 +23,7 @@ import type {
   CampaignSnapshot,
 } from "@/lib/dungeons/campaign"
 import { getCampaign, sendCampaignEvent } from "@/lib/dungeons/api"
+import { MOONWAKE_MILESTONE_STORIES, MOONWAKE_ROOM_STORY_VOLUMES } from "@/lib/dungeons/moonwake-reader-index"
 import { MoonwakeChronicle } from "./moonwake-chronicle"
 import "./dungeon-live-world.css"
 
@@ -735,7 +737,9 @@ export default function DungeonLiveWorld() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [respawnVersion, setRespawnVersion] = useState(0)
   const [dialogue, setDialogue] = useState<NpcConversation | null>(null)
-  const [memory, setMemory] = useState<{ title: string; text: string } | null>(null)
+  const [memory, setMemory] = useState<{ title: string; text: string; volume?: string } | null>(null)
+  const [milestoneStory, setMilestoneStory] = useState<{ title: string; volume: string; paragraphs: string[] } | null>(null)
+  const [endingAfterMilestone, setEndingAfterMilestone] = useState(false)
   const [showChronicle, setShowChronicle] = useState(false)
   const [showBestiary, setShowBestiary] = useState(false)
   const [showQuests, setShowQuests] = useState(false)
@@ -843,13 +847,26 @@ export default function DungeonLiveWorld() {
       setToast(copy)
       if (action === "lore") {
         const discovered = WORLD_ROOMS.find((entry) => entry.lore?.id === key)?.lore
-        if (discovered) setMemory({ title: discovered.title, text: discovered.text })
+        if (discovered) setMemory({ title: discovered.title, text: discovered.text, volume: MOONWAKE_ROOM_STORY_VOLUMES[key] })
       }
-      if (bossWon && key === "orin_first_keeper") setEndingChoice(true)
+      if (bossWon) {
+        const story = MOONWAKE_MILESTONE_STORIES[key]
+        if (story) setMilestoneStory(story)
+        if (key === "orin_first_keeper") setEndingAfterMilestone(true)
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The campaign could not be saved.")
     }
   }, [applyEvent])
+
+  const continueMilestone = () => {
+    setMilestoneStory(null)
+    setPaused(false)
+    if (endingAfterMilestone) {
+      setEndingAfterMilestone(false)
+      setEndingChoice(true)
+    }
+  }
 
   const changeRoom = useCallback(async (target: string) => {
     try {
@@ -1025,6 +1042,7 @@ export default function DungeonLiveWorld() {
                   <span>{entry.region.toUpperCase()}</span>
                   <strong>{entry.title}</strong>
                   <small>{isCurrent ? "YOU ARE HERE" : canTravel ? "NEXT PASSAGE" : cleared ? "WARDEN REMEMBERED" : sealed ? "SEALED BY THE QUIET" : visited ? "MAPPED" : "NOT YET MAPPED"}</small>
+                  {entry.lore && <small className={campaign?.discoveredLore.includes(entry.lore.id) ? "ld-live-map-story-state is-discovered" : "ld-live-map-story-state"}>{campaign?.discoveredLore.includes(entry.lore.id) ? "STORY MEMORY RECOVERED" : "STORY MEMORY TO FIND"}</small>}
                 </button>
               )
             })}
@@ -1134,7 +1152,7 @@ export default function DungeonLiveWorld() {
               foundSecrets={campaign?.discoveredSecrets ?? []}
               settings={settings}
               inputRef={inputRef}
-              paused={!gameStarted || paused || !!dialogue || !!memory || endingChoice || showSettings || showChronicle || showBestiary || showQuests || showMap}
+              paused={!gameStarted || paused || !!dialogue || !!memory || !!milestoneStory || endingChoice || showSettings || showChronicle || showBestiary || showQuests || showMap}
               onHud={setHud}
               onEvent={(action, key) => void saveWorldEvent(action, key)}
               onRoomExit={(target) => void changeRoom(target)}
@@ -1196,7 +1214,24 @@ export default function DungeonLiveWorld() {
           <section className="ld-live-dialogue" role="dialog" aria-modal="true" aria-label={memory.title}>
             <div className="ld-live-panel-head"><div><span>RECOVERED MEMORY</span><h3>{memory.title}</h3></div><button onClick={() => setMemory(null)} aria-label="Close memory"><X size={16} /></button></div>
             <p>“{memory.text}”</p>
+            {memory.volume && <Link className="ld-live-ending-option ld-live-story-link" href={`/dungeons/story?volume=${memory.volume}`}>Read the complete memory chapter ↗</Link>}
             <button className="ld-live-ending-option" onClick={() => setMemory(null)}>Return to the path</button>
+          </section>
+        </div>
+      )}
+
+      {milestoneStory && (
+        <div className="ld-live-modal-backdrop" role="presentation">
+          <section className="ld-live-dialogue ld-live-milestone-story" role="dialog" aria-modal="true" aria-label={milestoneStory.title}>
+            <div className="ld-live-panel-head">
+              <div><span>THE CHRONICLE OPENS · NEW CHAPTER</span><h3>{milestoneStory.title}</h3></div>
+              <button onClick={continueMilestone} aria-label="Continue the journey"><X size={16} /></button>
+            </div>
+            {milestoneStory.paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+            <Link className="ld-live-ending-option ld-live-story-link" href={`/dungeons/story?volume=${milestoneStory.volume}`}>
+              Read this chapter in the Testament ↗
+            </Link>
+            <button className="ld-live-ending-option" onClick={continueMilestone}>Continue the journey</button>
           </section>
         </div>
       )}

@@ -105,6 +105,8 @@ fn allowed_rooms() -> &'static [&'static str] {
         "frost_name_library", "frost_glass_causeway", "frost_hushed_throne",
         "astral_scriptorium", "astral_orbit_gallery", "astral_first_star",
         "quiet_hushwater", "quiet_echo_court", "quiet_moonheart",
+        "mosslight_unsent_orchard", "ember_voice_foundry", "frost_unborn_catalogue",
+        "astral_inward_observatory", "quiet_return_corridor",
     ]
 }
 
@@ -126,6 +128,11 @@ fn connected_rooms(from: &str, to: &str) -> bool {
         ("astral_first_star", "quiet_hushwater"),
         ("quiet_hushwater", "quiet_echo_court"),
         ("quiet_echo_court", "quiet_moonheart"),
+        ("mosslight_root_archive", "mosslight_unsent_orchard"),
+        ("ember_slag_bridge", "ember_voice_foundry"),
+        ("frost_glass_causeway", "frost_unborn_catalogue"),
+        ("astral_orbit_gallery", "astral_inward_observatory"),
+        ("quiet_echo_court", "quiet_return_corridor"),
     ];
     LINKS.iter().any(|(left, right)| (*left == from && *right == to) || (*left == to && *right == from))
 }
@@ -215,6 +222,11 @@ fn lore_is_in_room(key: &str, room: &str) -> bool {
             | ("lore_echo", "quiet_echo_court")
             | ("lore_fifth_note", "quiet_moonheart")
             | ("lore_underlight", "moonwake_underlight")
+            | ("lore_orchard_unsent", "mosslight_unsent_orchard")
+            | ("lore_foundry_voices", "ember_voice_foundry")
+            | ("lore_catalogue_unborn", "frost_unborn_catalogue")
+            | ("lore_observatory_inward", "astral_inward_observatory")
+            | ("lore_corridor_returns", "quiet_return_corridor")
     )
 }
 
@@ -504,5 +516,24 @@ mod tests {
         assert!(connected_rooms("moonwake_observatory", "mosslight_bell_garden"));
         assert!(connected_rooms("mosslight_bell_garden", "moonwake_observatory"));
         assert!(!connected_rooms("moonwake_observatory", "quiet_moonheart"));
+    }
+
+    #[test]
+    fn story_memory_rooms_are_registered_connected_and_room_scoped() {
+        let memories = [
+            ("mosslight_root_archive", "mosslight_unsent_orchard", "lore_orchard_unsent"),
+            ("ember_slag_bridge", "ember_voice_foundry", "lore_foundry_voices"),
+            ("frost_glass_causeway", "frost_unborn_catalogue", "lore_catalogue_unborn"),
+            ("astral_orbit_gallery", "astral_inward_observatory", "lore_observatory_inward"),
+            ("quiet_echo_court", "quiet_return_corridor", "lore_corridor_returns"),
+        ];
+
+        for (parent, room, lore) in memories {
+            assert!(allowed_rooms().contains(&room));
+            assert!(connected_rooms(parent, room));
+            assert!(connected_rooms(room, parent));
+            assert!(lore_is_in_room(lore, room));
+            assert!(!lore_is_in_room(lore, parent));
+        }
     }
 }

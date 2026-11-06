@@ -11,7 +11,7 @@ A self-contained Next.js + Three.js + Rust dungeon feature bundle for Lunar: a r
 - Clearing stage 800 unlocks Infinity. Each Infinity victory advances the player's saved depth; every tenth depth is a boss encounter.
 - Players choose from four server-validated actions: Arc Strike, Moon Guard, Star Pulse, and Lantern Focus (a limited-turn heal).
 - The original five-act story now follows the Moonwake Testament: the Lumen, the Quiet, Orin the First Keeper, Iri/Auralis, and the five lunar notes.
-- The real-time campaign has a connected 17-room world: Moonwake Observatory, five linked kingdoms, and the hidden Underlight room. A separate side-scrolling player controller supports jumping, dash, wall-jump, double-jump, grapple, melee attacks, and camera-follow.
+- The real-time campaign has a connected 22-room world: Moonwake Observatory, five linked kingdoms, five optional story chambers, and the hidden Underlight room. A separate side-scrolling player controller supports jumping, dash, wall-jump, double-jump, grapple, melee attacks, and camera-follow.
 - Four movement arts unlock from four realm wardens. Later gates require the relevant art; the Underlight requires five hidden fragments.
 - NPC companion quests record choices and companion trust. Lore tablets, secrets, a bestiary, shrine checkpoints, a hidden boss, and three alternate endings are included.
 - Accessibility settings include remappable keyboard controls, touch controls, reduced motion, camera-shake control, high-contrast tells, and shape-coded telegraphs.
@@ -154,10 +154,26 @@ The canonical five-act story and its companion, creature, and afterstory folios 
 
 The in-app reader lives at **/dungeons/story** and includes click-to-select volume navigation, previous/next controls, live reading progress, a focus-reading layout, keyboard-accessible controls, responsive layouts, and restrained moonlit transitions. Motion follows the user's reduced-motion preference. The reader links back to the live campaign and the 800-stage atlas.
 
-The dungeon landing page now has one connected navigation rail for the live campaign, 800-stage atlas, and complete story archive. The Chronicle also links directly to the full Testament. The seven volumes preserve the complete **4,972-line** manuscript:
+The dungeon landing page now has one connected navigation rail for the live campaign, 800-stage atlas, and complete story archive. The Chronicle also links directly to the full Testament. The seven original volumes preserve the complete **4,972-line** manuscript. The reader now interleaves six additional map-linked chronicles for a total of **13 volumes**:
 - The Lumen's origin, five notes, the Quiet, the Keepers, and the Wayfarer's arrival.
 - Five full acts following the established playable route and its guardians.
 - Expanded histories and arcs for Iri/Auralis, Vey, Edda, Nym, Orin, and the Wayfarer.
 - Companion threads, hidden marks, the Underlight, the Unwritten Warden, bestiary folios, side stories, and all three endings.
 
 The reader no longer uses server filesystem reads, and the original Markdown assets are removed from `public/moonwake/`. The campaign save schema, Rust API, and gameplay contracts are unchanged.
+
+## 9. Map-linked story expansion
+
+The live world now has **22 playable rooms**. Five optional side chambers branch from the existing route:
+- Mosslight Root Archive → The Unsent Orchard.
+- Ember Slag Bridge → The Voice Foundry.
+- Frostglass Causeway → The Unborn Catalogue.
+- Astral Orbit Gallery → The Inward Observatory.
+- Quiet Echo Court → The Returning Corridor.
+
+Each chamber has its own platforms, shrine, discoverable lore entry, Chronicle state, and corresponding long-form interlude in `frontend/lib/dungeons/moonwake-map-stories.ts`. The world map labels story memories as undiscovered or recovered. The Rust campaign API allow-list, connected-room graph, and room-scoped lore validation include all five side chambers; a regression test covers every new door and lore key.
+
+Defeating each of the five campaign wardens now opens a short milestone scene and a direct link to its full act. The 800-stage atlas does the same at stages 160, 320, 480, 640, and 800. Reader deep links use `/dungeons/story?volume=<volume-id>`, so lore pickups, boss scenes, the map, and atlas milestones lead to the corresponding place in the Testament.
+
+The expanded reader has 13 volumes: the original prologue, five acts, companion folios, five realm interludes, and the Underlight coda. The new interludes deepen the psychological mystery around copied memories, unreliable records, the Quiet's borrowed voices, Iri/Auralis, and the Keepers' first failed attempt to protect the Lumen. The existing campaign save format is unchanged; story unlocks derive from already-persisted room lore and boss defeats.
+

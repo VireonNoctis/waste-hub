@@ -1,0 +1,29 @@
+import { MOONWAKE_VOLUMES, type MoonwakeVolume } from "./moonwake-story"
+import {
+  MOONWAKE_MAP_VOLUMES,
+  MOONWAKE_MILESTONE_STORIES,
+  MOONWAKE_ROOM_STORIES,
+} from "./moonwake-map-stories"
+
+export const MOONWAKE_READER_VOLUMES: MoonwakeVolume[] = [
+  MOONWAKE_VOLUMES[0],
+  MOONWAKE_VOLUMES[1],
+  MOONWAKE_MAP_VOLUMES[0],
+  MOONWAKE_VOLUMES[2],
+  MOONWAKE_MAP_VOLUMES[1],
+  MOONWAKE_VOLUMES[3],
+  MOONWAKE_MAP_VOLUMES[2],
+  MOONWAKE_VOLUMES[4],
+  MOONWAKE_MAP_VOLUMES[3],
+  MOONWAKE_VOLUMES[5],
+  MOONWAKE_MAP_VOLUMES[4],
+  MOONWAKE_VOLUMES[6],
+  MOONWAKE_MAP_VOLUMES[5],
+]
+
+export const MOONWAKE_ROOM_STORY_VOLUMES: Record<string, string> = {
+  ...MOONWAKE_ROOM_STORIES,
+  lore_underlight: "interlude-after",
+}
+
+export { MOONWAKE_MILESTONE_STORIES }

@@ -490,3 +490,12 @@
   transform: translateY(-1px);
 }
 .ld-story-full-link span { color: #bfb6e9; font-size: 12px; }
+
+
+.ld-live-dialogue.ld-live-milestone-story { width: min(620px, 100%); max-height: min(84vh, 760px); overflow-y: auto; }
+.ld-live-milestone-story .ld-live-panel-head > div > span { color: #c9bced; }
+.ld-live-milestone-story > p { margin: 12px 0; color: #d2d0e8; font: 12px/1.85 ui-serif, Georgia, serif; }
+.ld-live-story-link { display: flex; width: fit-content; margin: 12px 0; color: #e6e0ff; text-decoration: none; }
+.ld-live-story-link:hover { color: #fff; text-decoration: none; }
+.ld-live-map-route button .ld-live-map-story-state { color: #8d9ab9; font: 700 6px ui-monospace, monospace; letter-spacing: .08em; }
+.ld-live-map-route button .ld-live-map-story-state.is-discovered { color: #b8e8d7; }
