@@ -150,13 +150,14 @@ Recovered lore now opens as an in-world memory panel and pauses the simulation w
 
 ## 8. Complete Moonwake Testament
 
-The campaign's full canonical story is now published in frontend/public/moonwake/ and rendered in the in-app reader at **/dungeons/story**. The Chronicle links directly to this reader.
+The canonical five-act story and its companion, creature, and afterstory folios are part of the Next.js application at `frontend/lib/dungeons/moonwake-story.ts`. The manuscript is represented as typed story blocks (headings, paragraphs, quotations, lists, and dividers), rather than runtime-loaded Markdown files.
 
-The manuscript contains **4,972 story lines** across the world prologue, all five acts, and the companion/creature folios:
-- The Lumen's origin, the five notes, the Quiet, the Keepers, and the Wayfarer's arrival.
-- Five full acts following the existing playable route and its guardians.
-- Expanded histories and character arcs for Iri/Auralis, Vey, Edda, Nym, Orin, and the Wayfarer.
-- The six existing companion threads, five hidden marks, the Underlight, and the Unwritten Warden.
-- Bestiary folios, supporting characters, recovered pages, dialogue, side stories, and the three established endings.
+The in-app reader lives at **/dungeons/story** and includes click-to-select volume navigation, previous/next controls, live reading progress, a focus-reading layout, keyboard-accessible controls, responsive layouts, and restrained moonlit transitions. Motion follows the user's reduced-motion preference. The reader links back to the live campaign and the 800-stage atlas.
 
-The reader route loads the Markdown volumes from public/moonwake/ on the server and presents a navigable, styled book. The existing campaign save schema and event API are unchanged.
+The dungeon landing page now has one connected navigation rail for the live campaign, 800-stage atlas, and complete story archive. The Chronicle also links directly to the full Testament. The seven volumes preserve the complete **4,972-line** manuscript:
+- The Lumen's origin, five notes, the Quiet, the Keepers, and the Wayfarer's arrival.
+- Five full acts following the established playable route and its guardians.
+- Expanded histories and arcs for Iri/Auralis, Vey, Edda, Nym, Orin, and the Wayfarer.
+- Companion threads, hidden marks, the Underlight, the Unwritten Warden, bestiary folios, side stories, and all three endings.
+
+The reader no longer uses server filesystem reads, and the original Markdown assets are removed from `public/moonwake/`. The campaign save schema, Rust API, and gameplay contracts are unchanged.

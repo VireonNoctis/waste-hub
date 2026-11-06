@@ -1,6 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { CSSProperties } from "react"
 import {
@@ -292,7 +293,12 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
           </div>
         </header>
 
-        <DungeonLiveWorld />
+        <nav className="ld-mode-nav" aria-label="Moonwake navigation">
+          <a href="#moonwake-campaign"><span>01</span><strong>LIVE CAMPAIGN</strong><small>EXPLORE THE WORLD</small></a>
+          <a href="#dungeon-atlas"><span>02</span><strong>800-STAGE ATLAS</strong><small>DESCEND THE ROUTE</small></a>
+          <Link href="/dungeons/story"><span>03</span><strong>FULL TESTAMENT</strong><small>READ ALL SEVEN VOLUMES</small><ArrowRight size={13} /></Link>
+        </nav>
+        <div id="moonwake-campaign" className="ld-mode-anchor"><DungeonLiveWorld /></div>
 
         {showChronicle && (
           <section className="ld-chronicle-panel" aria-label="Campaign chronicle">
@@ -344,6 +350,7 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
         {error && <div className="ld-alert" role="alert"><span>{error}</span><button onClick={() => setError(null)} aria-label="Dismiss error"><X size={15} /></button></div>}
         {notice && (!battle || battle.status !== "active") && <div className="ld-notice"><Check size={16} /> {notice}</div>}
 
+        <div id="dungeon-atlas" className="ld-mode-anchor" />
         {loading ? (
           <div className="ld-loading"><span className="ld-loader" /> Reading the ancient map…</div>
         ) : battle ? (
