@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, BookOpen, ChevronLeft, ChevronRight, Sparkles } from "lucide-react"
-import { type MoonwakeInlineRun, type MoonwakeStoryBlock } from "@/lib/dungeons/moonwake-story"
-import { MOONWAKE_READER_VOLUMES } from "@/lib/dungeons/moonwake-reader-index"
+import { MOONWAKE_STORY_LINE_COUNT, type MoonwakeInlineRun, type MoonwakeStoryBlock } from "@/lib/dungeons/moonwake-story"
+import { MOONWAKE_PROSE_WORD_COUNT, MOONWAKE_READER_VOLUMES } from "@/lib/dungeons/moonwake-reader-index"
 
 function InlineText({ runs }: { runs: MoonwakeInlineRun[] }) {
   return (
@@ -104,7 +104,7 @@ export default function MoonwakeStoryReader() {
             <h1>A light is not made smaller by being shared.</h1>
             <p>Five kingdoms. Five notes. One unfinished promise. Follow the Wayfarer from the first light beneath the observatory to the choice that waits beyond the Quiet.</p>
             <button className="ld-story-start" onClick={() => selectVolume(0)}><BookOpen size={15} /> BEGIN THE TESTAMENT <ArrowRight size={15} /></button>
-            <div className="ld-story-stats"><span>05 ACTS</span><span>13 VOLUMES</span><span>4,972 ORIGINAL LINES</span><span>6 MAP CHRONICLES</span></div>
+            <div className="ld-story-stats"><span>05 ACTS</span><span>{MOONWAKE_READER_VOLUMES.length} VOLUMES</span><span>{MOONWAKE_PROSE_WORD_COUNT.toLocaleString()} STORY WORDS</span><span>{MOONWAKE_STORY_LINE_COUNT.toLocaleString()} ORIGINAL LINES</span><span>06 MAP CHRONICLES</span></div>
           </div>
           <div className="ld-story-emblem" aria-hidden="true">
             <span className="ld-story-emblem-core">✦</span>

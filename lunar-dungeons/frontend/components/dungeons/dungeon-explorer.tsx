@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic"
 import Link from "next/link"
+import { MOONWAKE_MILESTONE_STORIES, MOONWAKE_READER_VOLUMES } from "@/lib/dungeons/moonwake-reader-index"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { CSSProperties } from "react"
@@ -561,6 +562,10 @@ export function DungeonExplorer({ onVictory }: DungeonExplorerProps) {
               <blockquote>{storyMilestone.revelation}</blockquote>
               <div className="ld-atlas-story-memory"><strong>{storyMilestone.memoryTitle}</strong><span>“{storyMilestone.memoryText}”</span></div>
               <Link href={`/dungeons/story?volume=${["act-one", "act-two", "act-three", "act-four", "act-five"][storyMilestone.id - 1]}`}>READ THE FULL CHAPTER ↗</Link>
+              {(MOONWAKE_MILESTONE_STORIES[["verdant_colossus", "ember_sovereign", "hollow_monarch", "astral_warden", "orin_first_keeper"][storyMilestone.id - 1]]?.relatedVolumes ?? []).map((volumeId) => {
+                const volume = MOONWAKE_READER_VOLUMES.find((item) => item.id === volumeId)
+                return volume ? <Link key={volumeId} className="ld-atlas-story-related" href={`/dungeons/story?volume=${volumeId}`}>CONTINUE: {volume.title} ↗</Link> : null
+              })}
               <button className="ld-atlas-story-continue" onClick={() => setStoryMilestone(null)}>RETURN TO THE ATLAS</button>
             </section>
           </div>

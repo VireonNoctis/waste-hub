@@ -23,7 +23,7 @@ import type {
   CampaignSnapshot,
 } from "@/lib/dungeons/campaign"
 import { getCampaign, sendCampaignEvent } from "@/lib/dungeons/api"
-import { MOONWAKE_MILESTONE_STORIES, MOONWAKE_ROOM_STORY_VOLUMES } from "@/lib/dungeons/moonwake-reader-index"
+import { MOONWAKE_MILESTONE_STORIES, MOONWAKE_READER_VOLUMES, MOONWAKE_ROOM_STORY_VOLUMES } from "@/lib/dungeons/moonwake-reader-index"
 import { MoonwakeChronicle } from "./moonwake-chronicle"
 import "./dungeon-live-world.css"
 
@@ -737,8 +737,8 @@ export default function DungeonLiveWorld() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [respawnVersion, setRespawnVersion] = useState(0)
   const [dialogue, setDialogue] = useState<NpcConversation | null>(null)
-  const [memory, setMemory] = useState<{ title: string; text: string; volume?: string } | null>(null)
-  const [milestoneStory, setMilestoneStory] = useState<{ title: string; volume: string; paragraphs: string[] } | null>(null)
+  const [memory, setMemory] = useState<{ title: string; text: string; volumes?: string[] } | null>(null)
+  const [milestoneStory, setMilestoneStory] = useState<{ title: string; volume: string; paragraphs: string[]; relatedVolumes?: string[] } | null>(null)
   const [endingAfterMilestone, setEndingAfterMilestone] = useState(false)
   const [showChronicle, setShowChronicle] = useState(false)
   const [showBestiary, setShowBestiary] = useState(false)
@@ -847,7 +847,7 @@ export default function DungeonLiveWorld() {
       setToast(copy)
       if (action === "lore") {
         const discovered = WORLD_ROOMS.find((entry) => entry.lore?.id === key)?.lore
-        if (discovered) setMemory({ title: discovered.title, text: discovered.text, volume: MOONWAKE_ROOM_STORY_VOLUMES[key] })
+        if (discovered) setMemory({ title: discovered.title, text: discovered.text, volumes: MOONWAKE_ROOM_STORY_VOLUMES[key] })
       }
       if (bossWon) {
         const story = MOONWAKE_MILESTONE_STORIES[key]
@@ -1214,7 +1214,10 @@ export default function DungeonLiveWorld() {
           <section className="ld-live-dialogue" role="dialog" aria-modal="true" aria-label={memory.title}>
             <div className="ld-live-panel-head"><div><span>RECOVERED MEMORY</span><h3>{memory.title}</h3></div><button onClick={() => setMemory(null)} aria-label="Close memory"><X size={16} /></button></div>
             <p>“{memory.text}”</p>
-            {memory.volume && <Link className="ld-live-ending-option ld-live-story-link" href={`/dungeons/story?volume=${memory.volume}`}>Read the complete memory chapter ↗</Link>}
+            {memory.volumes?.map((volumeId) => {
+              const volume = MOONWAKE_READER_VOLUMES.find((item) => item.id === volumeId)
+              return volume ? <Link key={volumeId} className="ld-live-ending-option ld-live-story-link" href={`/dungeons/story?volume=${volumeId}`}>Read: {volume.title} ↗</Link> : null
+            })}
             <button className="ld-live-ending-option" onClick={() => setMemory(null)}>Return to the path</button>
           </section>
         </div>
@@ -1231,6 +1234,10 @@ export default function DungeonLiveWorld() {
             <Link className="ld-live-ending-option ld-live-story-link" href={`/dungeons/story?volume=${milestoneStory.volume}`}>
               Read this chapter in the Testament ↗
             </Link>
+            {milestoneStory.relatedVolumes?.map((volumeId) => {
+              const volume = MOONWAKE_READER_VOLUMES.find((item) => item.id === volumeId)
+              return volume ? <Link key={volumeId} className="ld-live-ending-option ld-live-story-link" href={`/dungeons/story?volume=${volumeId}`}>Continue: {volume.title} ↗</Link> : null
+            })}
             <button className="ld-live-ending-option" onClick={continueMilestone}>Continue the journey</button>
           </section>
         </div>

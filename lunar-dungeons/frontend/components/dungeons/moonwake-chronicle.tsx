@@ -141,7 +141,7 @@ export function MoonwakeChronicle({ campaign }: { campaign: CampaignSnapshot }) 
         <h3>The Moonwake Testament</h3>
         <p>Moonwake was not a kingdom built to rule the night. It was an observatory built to listen: a place where the moon's phases were read as letters, eclipses as held breaths, and returning tides as promises that what had gone missing could still find its way home.</p>
         <p>At its centre rested the Lumen, a living light that remembered every name spoken beneath the sky. When it began to hold more memory than one keeper could safely carry, Orin divided it into five notes and entrusted them to the wardens of five kingdoms. The Quiet gathered around the silence left behind. The old atlas called the descent a route to a throne. The lantern calls it a route back to one another.</p>
-        <a className="ld-story-full-link" href="/dungeons/story">Read the 13-volume Moonwake Testament and map chronicles <span>↗</span></a>
+        <a className="ld-story-full-link" href="/dungeons/story">Read the complete 40-volume Moonwake Testament <span>↗</span></a>
       </section>
 
       <section className="ld-story-law-grid" aria-label="The laws of Moonwake">

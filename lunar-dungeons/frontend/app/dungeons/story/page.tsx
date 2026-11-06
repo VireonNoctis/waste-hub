@@ -4,7 +4,7 @@ import "./story.css"
 
 export const metadata: Metadata = {
   title: "The Moonwake Testament | Lunar",
-  description: "Explore the Moonwake Testament in an animated 13-volume reader with map-linked story chronicles.",
+  description: "Explore the complete 40-volume, 60,978-word Moonwake epic in an animated, map-connected reader.",
 }
 
 export default function MoonwakeStoryPage() {

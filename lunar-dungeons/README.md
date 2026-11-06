@@ -154,7 +154,7 @@ The canonical five-act story and its companion, creature, and afterstory folios 
 
 The in-app reader lives at **/dungeons/story** and includes click-to-select volume navigation, previous/next controls, live reading progress, a focus-reading layout, keyboard-accessible controls, responsive layouts, and restrained moonlit transitions. Motion follows the user's reduced-motion preference. The reader links back to the live campaign and the 800-stage atlas.
 
-The dungeon landing page now has one connected navigation rail for the live campaign, 800-stage atlas, and complete story archive. The Chronicle also links directly to the full Testament. The seven original volumes preserve the complete **4,972-line** manuscript. The reader now interleaves six additional map-linked chronicles for a total of **13 volumes**:
+The dungeon landing page now has one connected navigation rail for the live campaign, 800-stage atlas, and complete story archive. The Chronicle also links directly to the full Testament. The seven original volumes preserve the complete **4,972-line** manuscript. The reader interleaves six map-linked chronicles and twenty-seven additional canon folios for **40 volumes and 60,978 prose words**:
 - The Lumen's origin, five notes, the Quiet, the Keepers, and the Wayfarer's arrival.
 - Five full acts following the established playable route and its guardians.
 - Expanded histories and arcs for Iri/Auralis, Vey, Edda, Nym, Orin, and the Wayfarer.
@@ -175,5 +175,22 @@ Each chamber has its own platforms, shrine, discoverable lore entry, Chronicle s
 
 Defeating each of the five campaign wardens now opens a short milestone scene and a direct link to its full act. The 800-stage atlas does the same at stages 160, 320, 480, 640, and 800. Reader deep links use `/dungeons/story?volume=<volume-id>`, so lore pickups, boss scenes, the map, and atlas milestones lead to the corresponding place in the Testament.
 
-The expanded reader has 13 volumes: the original prologue, five acts, companion folios, five realm interludes, and the Underlight coda. The new interludes deepen the psychological mystery around copied memories, unreliable records, the Quiet's borrowed voices, Iri/Auralis, and the Keepers' first failed attempt to protect the Lumen. The existing campaign save format is unchanged; story unlocks derive from already-persisted room lore and boss defeats.
+The expanded reader has 40 volumes: the original prologue, five acts, companion folios, six realm interludes, and twenty-seven additional canon folios. The new interludes deepen the psychological mystery around copied memories, unreliable records, the Quiet's borrowed voices, Iri/Auralis, and the Keepers' first failed attempt to protect the Lumen. The existing campaign save format is unchanged; story unlocks derive from already-persisted room lore and boss defeats.
 
+## 10. The complete Moonwake epic
+
+The Testament is now a **40-volume, 60,978-word story archive**. The original five-act route and its 4,972-line manuscript remain intact. The expanded canon adds twenty-seven substantial volumes across seven focused collections:
+
+- The First Keeper's unfinished ledger, Auralis before Iri, the five wardens' histories, and Pell and Sella's small map.
+- Maelin's House of Measurements, Sella's kitchen, Nym's map mystery, the second bell, and the Archive of Unsent Apologies.
+- Vey's promise, Edda's chosen name, the Quiet's psychological anatomy, and the Wayfarer's unwritten identity.
+- Orin's present-tense reckoning, the five Underlight doors, and distinct epilogues for Shared Light, Quiet Keeper, and Open Sky.
+- The rooms-between-rooms atlas, the Unrecorded Day, Auralis's silver star, the lantern's witness tests, Pell's letters, Maelin's harbour trail, the lantern's origin, and the Festival of Five Windows.
+
+The reader interleaves these books with the original acts and map interludes in a deliberate narrative order. Its displayed word count is computed from the story blocks actually rendered in the reader, not a manually maintained label. The volume index contains forty unique IDs.
+
+Story pickups in the live-world map now link to several relevant volumes instead of only one. Each of the five major warden scenes offers its main act plus related character, mystery, and map chapters. The 800-stage atlas milestone scenes expose the same connected reading paths. All links resolve to the reader's `?volume=<id>` deep link.
+
+The expansion preserves the three endings as mutually exclusive futures. The Shared Light distributes the Lumen among the kingdoms; the Quiet Keeper maintains a shared watch at the threshold; the Open Sky releases the Lumen into many small lights. The shared coda describes only what remains true across the alternatives and does not merge their events.
+
+The story remains original and non-graphic. Its psychological tension comes from copied voices, unreliable records, false certainty, conflicting memories, consent, grief, and the consequences of decisions made in the name of protection. The main campaign still has optional rooms and side stories; completion of the central five-act route does not require finding every hidden archive.

@@ -213,6 +213,7 @@ export interface MoonwakeMilestoneStory {
   title: string
   volume: string
   paragraphs: string[]
+  relatedVolumes?: string[]
 }
 
 export const MOONWAKE_MILESTONE_STORIES: Record<string, MoonwakeMilestoneStory> = {
@@ -224,6 +225,7 @@ export const MOONWAKE_MILESTONE_STORIES: Record<string, MoonwakeMilestoneStory> 
       "Iri recognises the rhythm before she recognises the feeling. The forest was not calling the Wayfarer to the bell. It was keeping the warning alive until someone could hear it without mistaking it for an order.",
       "A new page opens in the Chronicle: the first return was never a summons. It was a promise that the road home would remain possible."
     ],
+    relatedVolumes: ["the-first-keeper","five-wardens-five-wounds","the-second-bell","interlude-mosslight","five-witnesses-unrecorded-day","rooms-between-rooms"],
   },
   ember_sovereign: {
     title: "The Hearth That Kept the Dark",
@@ -233,6 +235,7 @@ export const MOONWAKE_MILESTONE_STORIES: Record<string, MoonwakeMilestoneStory> 
       "Vey remembers the promise beneath his vigil. He had not been asked to keep one chair for one missing person. He had been asked to keep a place where anyone could sit without offering a memory in exchange.",
       "The second note is Hearth. It is not the fire that consumes. It is the warmth that remains when no one is forced to become fuel."
     ],
+    relatedVolumes: ["vey-last-promise","sella-kitchen-ordinary-things","interlude-ember","letters-pell-carried","archive-unsent-apologies"],
   },
   hollow_monarch: {
     title: "The Library of Unsaid Names",
@@ -242,6 +245,7 @@ export const MOONWAKE_MILESTONE_STORIES: Record<string, MoonwakeMilestoneStory> 
       "Edda speaks the name she chooses for herself. The Wayfarer sees her hands tremble, then sees her smile through tears. The library has not recovered every page, but it has recovered the right to ask before writing.",
       "The third note is Name. It is a door, not a definition."
     ],
+    relatedVolumes: ["edda-unwritten-name","interlude-frostglass","archive-unsent-apologies"],
   },
   astral_warden: {
     title: "An Atlas of Impossible Stars",
@@ -251,6 +255,7 @@ export const MOONWAKE_MILESTONE_STORIES: Record<string, MoonwakeMilestoneStory> 
       "The blank room was never missing. It was deliberately left for the traveller. The Quiet could copy every route the Keepers had drawn, but it could not copy a choice that had not yet been made.",
       "The fourth note is Distance. It is the space that lets two lives remain different and still find one another."
     ],
+    relatedVolumes: ["nym-map-that-lied","interlude-astral","maelin-tides-edge","rooms-between-rooms"],
   },
   orin_first_keeper: {
     title: "The Quiet Between Heartbeats",
@@ -260,6 +265,7 @@ export const MOONWAKE_MILESTONE_STORIES: Record<string, MoonwakeMilestoneStory> 
       "The last keeper's silence was made from care, fear, and a decision no one else was allowed to share. The truth does not erase the harm. It gives the people who lived through it a place to begin answering one another.",
       "The fifth note is Witness. The final choice belongs to the Wayfarer—not because the world has chosen them, but because the world has finally stopped choosing for them."
     ],
+    relatedVolumes: ["witness-present-tense","quiet-anatomy","wayfarer-name-unwritten","auralis-before-iri","interlude-quiet"],
   },
 }
 
