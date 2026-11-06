@@ -147,3 +147,16 @@ The in-game Chronicle now contains an expanded story bible:
 - Expanded descriptions of all three endings, with the selected ending and companion bond reflected in the Chronicle.
 
 Recovered lore now opens as an in-world memory panel and pauses the simulation while it is read; companion dialogue has also been expanded so character arcs are encountered during exploration. The story bible is implemented in `frontend/components/dungeons/moonwake-chronicle.tsx` and rendered inside the live-world Chronicle. The campaign's server-owned save format and event contract remain unchanged by this frontend/story expansion. The platform physics and ordinary enemy movement are still client-simulated; room transitions, checkpoints, discoveries, quests, boss health, unlocked movement arts, and ending choices continue to be persisted and validated by the Rust API.
+
+## 8. Complete Moonwake Testament
+
+The campaign's full canonical story is now published in frontend/public/moonwake/ and rendered in the in-app reader at **/dungeons/story**. The Chronicle links directly to this reader.
+
+The manuscript contains **4,972 story lines** across the world prologue, all five acts, and the companion/creature folios:
+- The Lumen's origin, the five notes, the Quiet, the Keepers, and the Wayfarer's arrival.
+- Five full acts following the existing playable route and its guardians.
+- Expanded histories and character arcs for Iri/Auralis, Vey, Edda, Nym, Orin, and the Wayfarer.
+- The six existing companion threads, five hidden marks, the Underlight, and the Unwritten Warden.
+- Bestiary folios, supporting characters, recovered pages, dialogue, side stories, and the three established endings.
+
+The reader route loads the Markdown volumes from public/moonwake/ on the server and presents a navigable, styled book. The existing campaign save schema and event API are unchanged.
