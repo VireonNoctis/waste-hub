@@ -468,3 +468,25 @@
   .ld-live-game-frame:fullscreen .ld-live-game-top { min-height: 34px; }
   .ld-live-game-frame:fullscreen .ld-live-controls { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
 }
+
+
+.ld-story-full-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 9px 12px;
+  color: #e5e0fa;
+  border: 1px solid rgba(190, 181, 232, .38);
+  background: rgba(101, 86, 151, .2);
+  font: 850 8px ui-monospace, monospace;
+  letter-spacing: .1em;
+  text-decoration: none;
+  transition: border-color .16s, background .16s, transform .16s;
+}
+.ld-story-full-link:hover {
+  border-color: #d0c7f2;
+  background: rgba(119, 103, 173, .35);
+  transform: translateY(-1px);
+}
+.ld-story-full-link span { color: #bfb6e9; font-size: 12px; }
