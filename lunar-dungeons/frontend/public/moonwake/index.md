@@ -1,7 +1,7 @@
 # The Moonwake Testament — Complete Story
 
 The complete canonical manuscript is arranged into seven volumes.
-Together, the six narrative volumes and the world prologue contain approximately 4,972 lines.
+The prologue and five acts contain 4,504 lines. The companion folios bring the complete story to 4,972 lines. The contents index is separate.
 
 ## Reading order
 
