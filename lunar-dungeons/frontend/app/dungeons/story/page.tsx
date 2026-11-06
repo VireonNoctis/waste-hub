@@ -56,7 +56,7 @@ export default async function MoonwakeStoryPage() {
   })))
 
   return (
-    <main className="ld-story-reader">
+    <main id="top" className="ld-story-reader">
       <div className="ld-story-reader-top">
         <Link href="/dungeons">← Return to the dungeons</Link>
         <span>LUNAR · THE MOONWAKE TESTAMENT</span>
@@ -66,7 +66,7 @@ export default async function MoonwakeStoryPage() {
         <h1>A light is not made smaller by being shared.</h1>
         <p>Five kingdoms. Five notes. One unfinished promise. Read the complete Moonwake story, from the first light beneath the observatory to the choice that waits beyond the Quiet.</p>
         <div className="ld-story-reader-meta">
-          <span>5 ACTS</span><span>7 VOLUMES</span><span>APPROX. 4,999 MANUSCRIPT LINES</span>
+          <span>5 ACTS</span><span>7 VOLUMES</span><span>4,972 STORY LINES</span>
         </div>
       </header>
       <nav className="ld-story-reader-nav" aria-label="Story volumes">
