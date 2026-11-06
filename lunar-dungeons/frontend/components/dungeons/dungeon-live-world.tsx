@@ -4,12 +4,13 @@ import { Canvas, useFrame } from "@react-three/fiber"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { MutableRefObject } from "react"
 import * as THREE from "three"
-import { BookOpen, Heart, Map, Pause, Play, Settings2, ShieldCheck, Sparkles, Wind, X } from "lucide-react"
+import { BookOpen, Heart, Map, Maximize2, Minimize2, Pause, Play, Settings2, ShieldCheck, Sparkles, Wind, X } from "lucide-react"
 import {
   BESTIARY_ENTRIES,
   CAMPAIGN_CHAPTERS,
   DEFAULT_ACCESSIBILITY,
   LUNAR_ENDINGS,
+  MOONWAKE_PROLOGUE,
   QUEST_CHOICES,
   WORLD_ROOMS,
   WORLD_ROOM_BY_ID,
@@ -21,6 +22,7 @@ import type {
   CampaignSnapshot,
 } from "@/lib/dungeons/campaign"
 import { getCampaign, sendCampaignEvent } from "@/lib/dungeons/api"
+import { MoonwakeChronicle } from "./moonwake-chronicle"
 import "./dungeon-live-world.css"
 
 type Action = keyof AccessibilitySettings["controls"]
@@ -702,6 +704,9 @@ export default function DungeonLiveWorld() {
   const [hud, setHud] = useState(EMPTY_HUD)
   const [loading, setLoading] = useState(true)
   const [paused, setPaused] = useState(false)
+  const [gameStarted, setGameStarted] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [respawnVersion, setRespawnVersion] = useState(0)
   const [dialogue, setDialogue] = useState<NpcConversation | null>(null)
   const [showChronicle, setShowChronicle] = useState(false)
   const [showBestiary, setShowBestiary] = useState(false)
@@ -714,6 +719,7 @@ export default function DungeonLiveWorld() {
   const [error, setError] = useState("")
   const [dialogueBusy, setDialogueBusy] = useState(false)
   const inputRef = useRef<InputState>({ held: new Set(), pressed: new Set() })
+  const gameFrameRef = useRef<HTMLDivElement>(null)
   const settingsRef = useRef<AccessibilitySettings>(DEFAULT_ACCESSIBILITY)
   const remappingRef = useRef<Action | null>(null)
   const room = WORLD_ROOM_BY_ID[roomId] ?? WORLD_ROOM_BY_ID.moonwake_observatory
@@ -746,6 +752,12 @@ export default function DungeonLiveWorld() {
   }, [])
 
   useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === gameFrameRef.current)
+    document.addEventListener("fullscreenchange", syncFullscreen)
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen)
+  }, [])
+
+  useEffect(() => {
     const actionForCode = (code: string): Action | undefined => (
       Object.entries(settingsRef.current.controls).find(([, mapped]) => mapped === code)?.[0] as Action | undefined
     )
@@ -761,6 +773,12 @@ export default function DungeonLiveWorld() {
         setRemapping(null)
         void sendCampaignEvent({ action: "settings", settings: next }).then((response) => setCampaign(response.campaign)).catch((reason) => setError(reason instanceof Error ? reason.message : "Could not save controls."))
         event.preventDefault()
+        return
+      }
+      if (event.code === "Escape") {
+        inputRef.current.held.clear()
+        inputRef.current.pressed.clear()
+        setPaused((value) => !value)
         return
       }
       const action = actionForCode(event.code)
@@ -824,6 +842,7 @@ export default function DungeonLiveWorld() {
   }, [applyEvent, roomId])
 
   const respawn = useCallback(async () => {
+    setRespawnVersion((version) => version + 1)
     try {
       const next = await applyEvent({ action: "respawn" })
       setRoomId(next.currentRoom)
@@ -878,6 +897,31 @@ export default function DungeonLiveWorld() {
     } else {
       inputRef.current.held.delete(action)
     }
+  }
+
+  const startGame = () => {
+    setGameStarted(true)
+    const frame = gameFrameRef.current
+    if (!frame?.requestFullscreen) {
+      setToast("Fullscreen is unavailable in this browser. The adventure will continue in this window.")
+      return
+    }
+    void frame.requestFullscreen().catch(() => {
+      setToast("The browser blocked fullscreen. Use the expand control whenever you are ready.")
+    })
+  }
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => setToast("The browser could not leave fullscreen."))
+      return
+    }
+    const frame = gameFrameRef.current
+    if (!frame?.requestFullscreen) {
+      setToast("Fullscreen is unavailable in this browser.")
+      return
+    }
+    void frame.requestFullscreen().catch(() => setToast("Fullscreen was blocked by the browser."))
   }
 
   const abilities = campaign?.unlockedAbilities ?? []
@@ -958,7 +1002,7 @@ export default function DungeonLiveWorld() {
       {showChronicle && (
         <div className="ld-live-panel ld-live-chronicle">
           <div className="ld-live-panel-head"><div><span>THE MOONWAKE TESTAMENT</span><h3>Five notes. A world that remembers.</h3></div><button onClick={() => setShowChronicle(false)} aria-label="Close chronicle"><X size={16} /></button></div>
-          <p className="ld-live-prologue">Before the first sunrise, Moonwake was a silver city built around a quiet observatory. Its people listened to the moon as if it were a living archive. When the Quiet arrived—not darkness, but the absence of being remembered—Orin broke the Lumen into five notes and hid them below the city. You wake beneath the observatory with a lantern that has no flame. Iri knows it. She will not yet say why.</p>
+          <p className="ld-live-prologue">{MOONWAKE_PROLOGUE}</p>
           <div className="ld-live-chapter-grid">
             {CAMPAIGN_CHAPTERS.map((chapter, index) => {
               const opened = (campaign?.bossesDefeated.length ?? 0) >= index
@@ -974,6 +1018,7 @@ export default function DungeonLiveWorld() {
               )
             })}
           </div>
+          {campaign && <MoonwakeChronicle campaign={campaign} />}
           {selectedEnding && <div className="ld-live-ending"><span>ENDING RECORDED</span><strong>{selectedEnding.title}</strong><p>{selectedEnding.description}</p><blockquote>{selectedEnding.epilogue}</blockquote></div>}
         </div>
       )}
@@ -1029,12 +1074,13 @@ export default function DungeonLiveWorld() {
         </div>
       )}
 
-      <div className="ld-live-game-frame">
+      <div ref={gameFrameRef} className="ld-live-game-frame">
         <div className="ld-live-game-top">
           <span><Map size={13} /> {room.region.toUpperCase()} · {currentChapter?.title ?? "THE LAST OBSERVATORY"}</span>
           <div className="ld-live-top-actions">
             <span><Heart size={13} /> {hud.hp}/{hud.maxHp}</span>
             <button onClick={() => setPaused((value) => !value)}>{paused ? <Play size={13} /> : <Pause size={13} />}{paused ? "Resume" : "Pause"}</button>
+            <button onClick={toggleFullscreen} aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"} title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>{isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}</button>
           </div>
         </div>
         <div className="ld-live-canvas-wrap">
@@ -1046,6 +1092,7 @@ export default function DungeonLiveWorld() {
           >
             <color attach="background" args={[room.background]} />
             <LiveScene
+              key={room.id + ":" + respawnVersion}
               room={room}
               enemyEnabled={!!activeEnemy}
               serverBossHp={campaign?.activeBoss?.id === room.enemy?.id ? campaign?.activeBoss?.hp ?? null : null}
@@ -1054,7 +1101,7 @@ export default function DungeonLiveWorld() {
               foundSecrets={campaign?.discoveredSecrets ?? []}
               settings={settings}
               inputRef={inputRef}
-              paused={paused || !!dialogue || endingChoice || showSettings || showChronicle || showBestiary || showQuests || showMap}
+              paused={!gameStarted || paused || !!dialogue || endingChoice || showSettings || showChronicle || showBestiary || showQuests || showMap}
               onHud={setHud}
               onEvent={(action, key) => void saveWorldEvent(action, key)}
               onRoomExit={(target) => void changeRoom(target)}
@@ -1063,13 +1110,22 @@ export default function DungeonLiveWorld() {
               onRespawn={() => void respawn()}
             />
           </Canvas>
+          {!gameStarted && (
+            <div className="ld-live-start-screen">
+              <span>THE MOONWAKE TESTAMENT</span>
+              <h3>The night is waiting for a witness.</h3>
+              <p>Move through the forgotten kingdoms, recover the five notes, and decide what the Lumen should become.</p>
+              <button onClick={startGame}><Play size={14} /> Enter the Moonwake</button>
+              <small>Fullscreen is requested only when you start. Press Escape to pause.</small>
+            </div>
+          )}
           {hud.telegraph && (
             <div className={settings.colorblindTelegraphs ? "ld-live-telegraph is-shaped" : "ld-live-telegraph"}>
               <span>{settings.colorblindTelegraphs ? "▲" : "!"}</span>
               {settings.highContrastTelegraphs ? "WARDEN PATTERN · MOVE FROM THE MARKED LANE" : "A pattern is gathering"}
             </div>
           )}
-          {paused && <div className="ld-live-pause"><span>THE NIGHT IS HELD</span><button onClick={() => setPaused(false)}><Play size={14} /> Return to the world</button></div>}
+          {paused && gameStarted && <div className="ld-live-pause"><span>THE NIGHT IS HELD</span><button onClick={() => setPaused(false)}><Play size={14} /> Return to the world</button></div>}
           <div className="ld-live-room-title"><span>{room.title}</span><small>{room.subtitle}</small></div>
           {hud.prompt && !paused && !dialogue && <div className="ld-live-interact-prompt">{hud.prompt}</div>}
         </div>
@@ -1090,6 +1146,7 @@ export default function DungeonLiveWorld() {
                 onPointerDown={(event) => { event.preventDefault(); pushTouch(action, true) }}
                 onPointerUp={() => pushTouch(action, false)}
                 onPointerLeave={() => pushTouch(action, false)}
+                onPointerCancel={() => pushTouch(action, false)}
               >{action === "left" ? "←" : action === "right" ? "→" : action === "jump" ? "JUMP" : action === "attack" ? "STRIKE" : action === "dash" ? "DASH" : action === "interact" ? "USE" : "HOOK"}</button>
             ))}
           </div>
