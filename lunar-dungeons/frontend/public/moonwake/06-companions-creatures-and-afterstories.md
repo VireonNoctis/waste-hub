@@ -453,61 +453,15 @@ The door was never locked.
 
 ---
 
-## VI. Epilogues for the companions
+## VI. The companions after the ending
 
-### Iri after the Shared Light
-
-Iri keeps the observatory's lantern in the front window.
-She writes no arrival list.
-She welcomes people who wish to speak.
-She lets people leave without asking where they are going.
-Some nights she uses the name Auralis.
-Some nights she uses Iri.
-Some nights she uses neither.
-The lantern remembers without deciding.
-
-### Vey after the Shared Light
-
-Vey trains a new circle of ash-smiths.
-They make smaller furnaces.
-They build more rest places.
-They leave empty seats beside every public hearth.
-Vey's old teacher remains without a face.
-The lesson remains in his hands.
-
-### Edda after the Shared Light
-
-Edda makes the Name Library a place for living people.
-The public shelves carry only what their owners choose.
-The private room remains open.
-The blank page becomes the most requested page in the archive.
-Edda writes her chosen name at the entrance.
-She leaves space beneath it.
-
-### Nym after the Shared Light
-
-Nym publishes an atlas with movable pages.
-The pages can be removed.
-The routes can be changed.
-Some sections are blank.
-The cartographer travels more than they sit at the table.
-They no longer apologise when a map is unfinished.
-
-### Orin after the Shared Light
-
-Orin learns to live in the city.
-They visit each kingdom.
-They do not ask to be called First Keeper.
-They help repair the observatory roof.
-They listen to stories without writing them down.
-They make mistakes.
-They apologise.
-They return.
-
-### The Wayfarer after the Shared Light
-
-The Wayfarer continues beyond the five kingdoms.
-The lantern remains beside them.
-It no longer points toward a throne.
-It glows when a place has room for a guest.
-The road remains open.
+The companions do not stop living when the Lumen is restored.
+Iri keeps the observatory lantern in the front window and welcomes visitors without recording their names.
+Vey teaches a new circle of ash-smiths to build smaller fires and leave time for rest.
+Edda makes the Name Library a place where every person controls their own record.
+Nym publishes a movable atlas with routes that can be revised and blank spaces that remain intentional.
+Orin learns ordinary work again: cooking, repairing chairs, listening, apologising, and sleeping through the night.
+The Wayfarer continues beyond the five kingdoms, carrying the lantern as a companion rather than a command.
+Some evenings they return to the observatory.
+Some evenings they do not.
+The road remains open either way.
