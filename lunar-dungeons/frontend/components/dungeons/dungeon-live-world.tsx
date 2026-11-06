@@ -46,6 +46,11 @@ const EMPTY_HUD: HudState = {
   boss: false, phase: null, telegraph: false, prompt: "", message: "",
 }
 
+function displayKey(code: string) {
+  if (code === "Space") return "SPACE"
+  return code.replace(/^Key/, "").replace(/^Arrow/, "←/").replace(/^Digit/, "")
+}
+
 function PlayerSprite({ playerRef }: { playerRef: MutableRefObject<THREE.Group | null> }) {
   return (
     <group ref={playerRef} position={[-9, -3.7, 1]}>
@@ -1155,7 +1160,7 @@ export default function DungeonLiveWorld() {
           {hud.boss && <b className={hud.phase === "awakened" ? "is-awakened" : ""}>{hud.phase === "awakened" ? "AWAKENED" : "SEALED"}</b>}
         </div>
         <div className="ld-live-controls">
-          <div className="ld-live-instructions"><span>A / D</span> move <span>SPACE</span> jump <span>J</span> strike <span>K</span> dash <span>E</span> interact <span>G</span> grapple</div>
+          <div className="ld-live-instructions"><span>{displayKey(settings.controls.left)} / {displayKey(settings.controls.right)}</span> move <span>{displayKey(settings.controls.jump)}</span> jump <span>{displayKey(settings.controls.attack)}</span> strike <span>{displayKey(settings.controls.dash)}</span> dash <span>{displayKey(settings.controls.interact)}</span> interact <span>{displayKey(settings.controls.grapple)}</span> grapple</div>
           <div className="ld-live-touch" aria-label="Touch controls">
             {(["left", "right", "jump", "attack", "dash", "interact", "grapple"] as Action[]).map((action) => (
               <button
