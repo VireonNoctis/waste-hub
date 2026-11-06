@@ -252,6 +252,7 @@ function LiveScene({
     enemyX: 4.5, enemyY: -3.7, enemyHp: enemyEnabled ? room.enemy?.hp ?? 0 : 0,
     enemyClock: 0, enemyTelegraph: false, enemyHitFlash: 0, enemyAlive: enemyEnabled, warningX: 4.5,
     lastAttack: -2, interactLock: 0, shake: 0, lastPrompt: "", timeSinceHud: 0,
+    coyoteTime: 0, jumpBuffer: 0, grappleCooldown: 0,
   })
 
   useEffect(() => {
@@ -282,6 +283,9 @@ function LiveScene({
     current.enemyAlive = enemyEnabled
     current.warningX = 4.5
     current.lastAttack = -2
+    current.coyoteTime = 0
+    current.jumpBuffer = 0
+    current.grappleCooldown = 0
     reportedBestiary.current = false
   }, [room.id, room.spawn, room.enemy, enemyEnabled, serverBossHp])
 
@@ -299,6 +303,9 @@ function LiveScene({
     const left = held.has("left")
     const right = held.has("right")
     const move = (right ? 1 : 0) - (left ? 1 : 0)
+    p.jumpBuffer = pressed.has("jump") ? 0.15 : Math.max(0, p.jumpBuffer - dt)
+    p.coyoteTime = p.grounded ? 0.12 : Math.max(0, p.coyoteTime - dt)
+    p.grappleCooldown = Math.max(0, p.grappleCooldown - dt)
 
     if (p.dashTime > 0) {
       p.dashTime = Math.max(0, p.dashTime - dt)
@@ -310,23 +317,27 @@ function LiveScene({
       p.vy -= 24 * dt
     }
 
-    if (pressed.has("jump")) {
+    if (p.jumpBuffer > 0) {
       const touchingWall = Math.abs(p.x) > 12.2 || room.platforms.some((platform) => (
         Math.abs(Math.abs(p.x - platform.x) - platform.width / 2 - 0.35) < 0.32
         && p.y < platform.y + 2.2 && p.y > platform.y - 0.7
       ))
-      if (p.grounded) {
+      if (p.grounded || p.coyoteTime > 0) {
         p.vy = 10.5
         p.grounded = false
         p.jumps = 1
+        p.coyoteTime = 0
+        p.jumpBuffer = 0
       } else if (touchingWall && abilities.includes("wall-jump")) {
         p.vy = 10.2
         p.vx = p.x < 0 ? 8.5 : -8.5
         p.facing = p.x < 0 ? 1 : -1
         p.jumps = 1
+        p.jumpBuffer = 0
       } else if (abilities.includes("double-jump") && p.jumps < 2) {
         p.vy = 9.7
         p.jumps += 1
+        p.jumpBuffer = 0
       }
     }
 
@@ -334,12 +345,19 @@ function LiveScene({
       p.dashTime = 0.17
       p.invulnerable = Math.max(p.invulnerable, 0.2)
     }
-    if (pressed.has("grapple") && abilities.includes("grapple")) {
-      const anchorX = p.x < 0 ? -1.5 : 1.5
-      p.vx = (anchorX - p.x) * 1.7
-      p.vy = 13.4
-      p.grounded = false
-      p.jumps = 1
+    if (pressed.has("grapple") && abilities.includes("grapple") && p.grappleCooldown <= 0) {
+      const anchor = room.platforms
+        .map((platform) => ({ x: platform.x, y: platform.y + 0.55 }))
+        .filter((point) => point.y > p.y + 0.35 && Math.abs(point.x - p.x) < 9)
+        .sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0]
+      if (anchor) {
+        p.vx = THREE.MathUtils.clamp((anchor.x - p.x) * 1.8, -12, 12)
+        p.vy = THREE.MathUtils.clamp(10.8 + (anchor.y - p.y) * 0.22, 10.8, 14)
+        p.facing = anchor.x >= p.x ? 1 : -1
+        p.grounded = false
+        p.jumps = 1
+        p.grappleCooldown = 0.72
+      }
     }
 
     const oldY = p.y
