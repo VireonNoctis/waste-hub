@@ -735,6 +735,7 @@ export default function DungeonLiveWorld() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [respawnVersion, setRespawnVersion] = useState(0)
   const [dialogue, setDialogue] = useState<NpcConversation | null>(null)
+  const [memory, setMemory] = useState<{ title: string; text: string } | null>(null)
   const [showChronicle, setShowChronicle] = useState(false)
   const [showBestiary, setShowBestiary] = useState(false)
   const [showQuests, setShowQuests] = useState(false)
@@ -805,6 +806,7 @@ export default function DungeonLiveWorld() {
       if (event.code === "Escape") {
         inputRef.current.held.clear()
         inputRef.current.pressed.clear()
+        setMemory(null)
         setPaused((value) => !value)
         return
       }
@@ -839,6 +841,10 @@ export default function DungeonLiveWorld() {
             : bossWon ? "Warden defeated. A new movement art has awakened."
               : "The warden's seal weakens. Keep reading its pattern."
       setToast(copy)
+      if (action === "lore") {
+        const discovered = WORLD_ROOMS.find((entry) => entry.lore?.id === key)?.lore
+        if (discovered) setMemory({ title: discovered.title, text: discovered.text })
+      }
       if (bossWon && key === "orin_first_keeper") setEndingChoice(true)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The campaign could not be saved.")
@@ -1128,7 +1134,7 @@ export default function DungeonLiveWorld() {
               foundSecrets={campaign?.discoveredSecrets ?? []}
               settings={settings}
               inputRef={inputRef}
-              paused={!gameStarted || paused || !!dialogue || endingChoice || showSettings || showChronicle || showBestiary || showQuests || showMap}
+              paused={!gameStarted || paused || !!dialogue || !!memory || endingChoice || showSettings || showChronicle || showBestiary || showQuests || showMap}
               onHud={setHud}
               onEvent={(action, key) => void saveWorldEvent(action, key)}
               onRoomExit={(target) => void changeRoom(target)}
@@ -1184,6 +1190,16 @@ export default function DungeonLiveWorld() {
         <div><ShieldCheck size={15} /><span>Campaign progress, shrines, discoveries, quests, and endings are saved to Lunar.</span></div>
         <div><Wind size={15} /><span>{abilities.length ? abilities.join(" · ").toUpperCase() : "Movement arts awaken as wardens are remembered"}</span></div>
       </div>
+
+      {memory && (
+        <div className="ld-live-modal-backdrop" role="presentation">
+          <section className="ld-live-dialogue" role="dialog" aria-modal="true" aria-label={memory.title}>
+            <div className="ld-live-panel-head"><div><span>RECOVERED MEMORY</span><h3>{memory.title}</h3></div><button onClick={() => setMemory(null)} aria-label="Close memory"><X size={16} /></button></div>
+            <p>“{memory.text}”</p>
+            <button className="ld-live-ending-option" onClick={() => setMemory(null)}>Return to the path</button>
+          </section>
+        </div>
+      )}
 
       {dialogue && (
         <div className="ld-live-modal-backdrop" role="presentation">
