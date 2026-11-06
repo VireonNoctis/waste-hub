@@ -1,5 +1,6 @@
 "use client"
 
+import { LUMEN_NOTES, STORY_ECHOES } from "@/lib/dungeons/campaign"
 import type { CampaignSnapshot } from "@/lib/dungeons/campaign"
 
 const ACTS = [
@@ -133,6 +134,8 @@ const ENDINGS = [
 export function MoonwakeChronicle({ campaign }: { campaign: CampaignSnapshot }) {
   const ending = ENDINGS.find((item) => item.id === campaign.ending)
   const unlocked = new Set(campaign.discoveredSecrets)
+  const recoveredNotes = new Set(campaign.recoveredNotes)
+  const recoveredEchoes = new Set(campaign.storyEchoes)
 
   return (
     <div className="ld-story-bible">
@@ -141,6 +144,10 @@ export function MoonwakeChronicle({ campaign }: { campaign: CampaignSnapshot }) 
         <h3>The Moonwake Testament</h3>
         <p>Moonwake was not a kingdom built to rule the night. It was an observatory built to listen: a place where the moon's phases were read as letters, eclipses as held breaths, and returning tides as promises that what had gone missing could still find its way home.</p>
         <p>At its centre rested the Lumen, a living light that remembered every name spoken beneath the sky. When it began to hold more memory than one keeper could safely carry, Orin divided it into five notes and entrusted them to the wardens of five kingdoms. The Quiet gathered around the silence left behind. The old atlas called the descent a route to a throne. The lantern calls it a route back to one another.</p>
+        <div className="ld-story-recovery-strip">
+          <div><span>RECOVERED LUMEN NOTES</span><strong>{recoveredNotes.size}/5</strong></div>
+          <div><span>OPTIONAL STORY ECHOES</span><strong>{recoveredEchoes.size}/5</strong></div>
+        </div>
         <a className="ld-story-full-link" href="/dungeons/story">Read the complete 40-volume Moonwake Testament <span>↗</span></a>
       </section>
 
@@ -183,12 +190,41 @@ export function MoonwakeChronicle({ campaign }: { campaign: CampaignSnapshot }) 
 
       <section className="ld-story-section">
         <div className="ld-story-section-heading"><span>THE FIVE HIDDEN MARKS</span><h3>The road beneath the road</h3></div>
-        <p className="ld-story-copy">The hidden fragments are not keys cut by a forgotten architect. Each one is a choice that someone made when no one else was watching. Find them all to enter the Underlight, where the sixth note waits in the margin of the story.</p>
+        <p className="ld-story-copy">The five secret fragments reveal where the old map was left unfinished. The five optional story chambers reveal why it was left unfinished. Both collections are needed to open the Underlight, where the sixth note waits in the margin of the story.</p>
         <div className="ld-story-secret-grid">
           {SECRETS.map(([title, copy], index) => {
             const keys = ["secret_mosslight", "secret_ember", "secret_frost", "secret_astral", "secret_quiet"]
             const found = unlocked.has(keys[index])
             return <article key={title} className={found ? "is-found" : ""}><span>{found ? "DISCOVERED" : "HIDDEN MEMORY"}</span><strong>{title}</strong><p>{found ? copy : "A fragment waits in a room already visited. Its meaning will appear when the lantern is brought close."}</p></article>
+          })}
+        </div>
+      </section>
+
+
+      <section className="ld-story-section">
+        <div className="ld-story-section-heading"><span>THE FIVE NOTES</span><h3>The Lumen, restored one promise at a time</h3></div>
+        <div className="ld-story-recovery-grid">
+          {LUMEN_NOTES.map((note) => {
+            const found = recoveredNotes.has(note.id)
+            return <article key={note.id} className={found ? "is-found" : ""}>
+              <span>{found ? "RECOVERED" : "AWAITING ITS WARDEN"}</span>
+              <strong>{note.title} · {note.realm}</strong>
+              <p>{note.meaning}</p>
+            </article>
+          })}
+        </div>
+      </section>
+
+      <section className="ld-story-section">
+        <div className="ld-story-section-heading"><span>THE FIVE STORY ECHOES</span><h3>What the side chambers leave behind</h3></div>
+        <div className="ld-story-recovery-grid">
+          {STORY_ECHOES.map((echo) => {
+            const found = recoveredEchoes.has(echo.lore)
+            return <article key={echo.lore} className={found ? "is-found" : ""}>
+              <span>{found ? "ECHO RECOVERED" : "STORY CHAMBER UNREAD"}</span>
+              <strong>{echo.title} · {echo.realm}</strong>
+              <p>{found ? echo.meaning : "Explore its optional chamber and read the memory to recover this echo."}</p>
+            </article>
           })}
         </div>
       </section>

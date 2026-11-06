@@ -54,6 +54,8 @@ struct CampaignState {
     completed_quests: Vec<String>,
     bosses_defeated: Vec<String>,
     quest_choices: BTreeMap<String, String>,
+    recovered_notes: Vec<String>,
+    story_echoes: Vec<String>,
     companion_affinity: i64,
     ending: Option<String>,
     active_boss: Option<ActiveBoss>,
@@ -73,6 +75,8 @@ impl Default for CampaignState {
             completed_quests: Vec::new(),
             bosses_defeated: Vec::new(),
             quest_choices: BTreeMap::new(),
+            recovered_notes: Vec::new(),
+            story_echoes: Vec::new(),
             companion_affinity: 0,
             ending: None,
             active_boss: None,
@@ -153,7 +157,55 @@ fn region_is_open(room: &str, state: &CampaignState) -> bool {
     if room.starts_with("quiet_") {
         return state.bosses_defeated.iter().any(|boss| boss == "astral_warden");
     }
-    room == "moonwake_underlight" && state.discovered_secrets.len() >= 5
+    room == "moonwake_underlight" && underlight_is_open(state)
+}
+
+fn note_for_boss(boss: &str) -> Option<&'static str> {
+    match boss {
+        "verdant_colossus" => Some("return"),
+        "ember_sovereign" => Some("hearth"),
+        "hollow_monarch" => Some("name"),
+        "astral_warden" => Some("distance"),
+        "orin_first_keeper" => Some("witness"),
+        _ => None,
+    }
+}
+
+fn story_echo_for_lore(key: &str) -> Option<&'static str> {
+    match key {
+        "lore_orchard_unsent" => Some("lore_orchard_unsent"),
+        "lore_foundry_voices" => Some("lore_foundry_voices"),
+        "lore_catalogue_unborn" => Some("lore_catalogue_unborn"),
+        "lore_observatory_inward" => Some("lore_observatory_inward"),
+        "lore_corridor_returns" => Some("lore_corridor_returns"),
+        _ => None,
+    }
+}
+
+fn sync_story_progress(campaign: &mut CampaignState) {
+    for boss in &campaign.bosses_defeated {
+        if let Some(note) = note_for_boss(boss) {
+            if !campaign.recovered_notes.iter().any(|item| item == note) {
+                campaign.recovered_notes.push(note.to_string());
+            }
+        }
+    }
+    for lore in &campaign.discovered_lore {
+        if let Some(echo) = story_echo_for_lore(lore) {
+            if !campaign.story_echoes.iter().any(|item| item == echo) {
+                campaign.story_echoes.push(echo.to_string());
+            }
+        }
+    }
+}
+
+fn underlight_is_open(state: &CampaignState) -> bool {
+    const ECHOES: &[&str] = &[
+        "lore_orchard_unsent", "lore_foundry_voices", "lore_catalogue_unborn",
+        "lore_observatory_inward", "lore_corridor_returns",
+    ];
+    state.discovered_secrets.len() >= 5
+        && ECHOES.iter().all(|echo| state.story_echoes.iter().any(|found| found.as_str() == *echo))
 }
 
 fn room_for_boss(boss: &str) -> Option<&'static str> {
@@ -304,7 +356,17 @@ async fn ensure_campaign(pool: &sqlx::SqlitePool, user_id: &str) -> Result<Campa
         .bind(user_id)
         .fetch_one(pool)
         .await?;
-    Ok(serde_json::from_str(&raw.0).unwrap_or_default())
+    let mut campaign: CampaignState = serde_json::from_str(&raw.0).unwrap_or_default();
+    sync_story_progress(&mut campaign);
+    let serialized = serde_json::to_string(&campaign).expect("campaign state serializes");
+    if serialized != raw.0 {
+        sqlx::query("UPDATE dungeon_campaign_state SET state_json = ?, updated_at = unixepoch() WHERE user_id = ?")
+            .bind(serialized)
+            .bind(user_id)
+            .execute(pool)
+            .await?;
+    }
+    Ok(campaign)
 }
 
 async fn save_campaign(pool: &sqlx::SqlitePool, user_id: &str, campaign: &CampaignState) -> Result<(), sqlx::Error> {
@@ -382,6 +444,11 @@ async fn update_campaign(
             if !campaign.discovered_lore.iter().any(|item| item == key) {
                 campaign.discovered_lore.push(key.to_string());
             }
+            if let Some(echo) = story_echo_for_lore(key) {
+                if !campaign.story_echoes.iter().any(|item| item == echo) {
+                    campaign.story_echoes.push(echo.to_string());
+                }
+            }
         }
         "secret" => {
             let key = event.key.as_deref().unwrap_or_default();
@@ -423,11 +490,10 @@ async fn update_campaign(
             if campaign.current_room != room_for_quest {
                 return Err(ApiError::new(axum::http::StatusCode::FORBIDDEN, "Return to the companion's room to complete this conversation."));
             }
-            let first_choice = choices.first().copied() == Some(choice);
             campaign.quest_choices.insert(key.to_string(), choice.to_string());
             if !campaign.completed_quests.iter().any(|item| item == key) {
                 campaign.completed_quests.push(key.to_string());
-                campaign.companion_affinity = (campaign.companion_affinity + if first_choice { 1 } else { 0 }).clamp(-5, 10);
+                campaign.companion_affinity = (campaign.companion_affinity + 1).clamp(0, 6);
             }
         }
         "boss-hit" => {
@@ -449,6 +515,11 @@ async fn update_campaign(
                 campaign.active_boss = None;
                 if !campaign.bosses_defeated.iter().any(|item| item == boss) {
                     campaign.bosses_defeated.push(boss.to_string());
+                }
+                if let Some(note) = note_for_boss(boss) {
+                    if !campaign.recovered_notes.iter().any(|item| item == note) {
+                        campaign.recovered_notes.push(note.to_string());
+                    }
                 }
                 if let Some(ability) = ability_for_boss(boss)
                     && !campaign.unlocked_abilities.iter().any(|item| item == ability)
@@ -501,14 +572,30 @@ mod tests {
     }
 
     #[test]
-    fn secret_room_requires_all_five_hidden_fragments() {
+    fn underlight_requires_five_hidden_fragments_and_five_story_echoes() {
         let mut state = CampaignState::default();
-        for secret in ["secret_mosslight", "secret_ember", "secret_frost", "secret_astral"] {
+        for secret in ["secret_mosslight", "secret_ember", "secret_frost", "secret_astral", "secret_quiet"] {
             state.discovered_secrets.push(secret.to_string());
         }
         assert!(!region_is_open("moonwake_underlight", &state));
-        state.discovered_secrets.push("secret_quiet".to_string());
+        for echo in ["lore_orchard_unsent", "lore_foundry_voices", "lore_catalogue_unborn", "lore_observatory_inward"] {
+            state.story_echoes.push(echo.to_string());
+        }
+        assert!(!region_is_open("moonwake_underlight", &state));
+        state.story_echoes.push("lore_corridor_returns".to_string());
         assert!(region_is_open("moonwake_underlight", &state));
+    }
+
+    #[test]
+    fn existing_campaign_data_backfills_notes_and_story_echoes() {
+        let mut state = CampaignState::default();
+        state.bosses_defeated.push("verdant_colossus".to_string());
+        state.bosses_defeated.push("orin_first_keeper".to_string());
+        state.discovered_lore.push("lore_observatory_inward".to_string());
+        sync_story_progress(&mut state);
+        assert!(state.recovered_notes.contains(&"return".to_string()));
+        assert!(state.recovered_notes.contains(&"witness".to_string()));
+        assert!(state.story_echoes.contains(&"lore_observatory_inward".to_string()));
     }
 
     #[test]

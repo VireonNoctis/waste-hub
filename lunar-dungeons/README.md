@@ -124,10 +124,11 @@ The route is:
 
 - Moonwake Observatory → Mosslight Wilds → Ember Hollow → Frostglass Vale → Astral Archive → Quiet Beyond.
 - Defeating the first four wardens unlocks dash, wall-jump, double-jump, and grapple in that order.
-- Five secret fragments open the Underlight beneath the observatory, where the Unwritten Warden waits.
+- The five realm wardens restore the Lumen's notes (Return, Hearth, Name, Distance, and Witness) and unlock the four movement arts in sequence.
+- Five secret fragments and five optional story-chamber echoes are both required to open the Underlight beneath the observatory, where the Unwritten Warden waits.
 - Shrine attunement saves a return room. Death returns the player to the last shrine.
-- Six companion conversations track choices and trust. Lore tablets and creature encounters fill the Chronicle and Bestiary.
-- Defeating Orin opens three final choices: Shared Light, Quiet Keeper, or Open Sky.
+- Six companion conversations save exact choices, show distinct outcomes on later visits, and contribute to trust without treating either answer as wrong.
+- Defeating Orin opens three mutually exclusive choices: Shared Light, Quiet Keeper, or Open Sky. The selected epilogue is shown in-world and can be reopened from the game header.
 
 The real-time platform physics and ordinary enemy encounters are client-simulated for responsive controls. Rust persists the campaign and validates connected room changes, realm gates, lore/secret/bestiary locations, quest choices, shrines, and boss encounter hits. The server does not run a frame-by-frame physics simulation. The original 800-stage atlas remains beneath the new campaign, with its existing onVictory reward handoff untouched.
 
@@ -175,7 +176,7 @@ Each chamber has its own platforms, shrine, discoverable lore entry, Chronicle s
 
 Defeating each of the five campaign wardens now opens a short milestone scene and a direct link to its full act. The 800-stage atlas does the same at stages 160, 320, 480, 640, and 800. Reader deep links use `/dungeons/story?volume=<volume-id>`, so lore pickups, boss scenes, the map, and atlas milestones lead to the corresponding place in the Testament.
 
-The expanded reader has 40 volumes: the original prologue, five acts, companion folios, six realm interludes, and twenty-seven additional canon folios. The new interludes deepen the psychological mystery around copied memories, unreliable records, the Quiet's borrowed voices, Iri/Auralis, and the Keepers' first failed attempt to protect the Lumen. The existing campaign save format is unchanged; story unlocks derive from already-persisted room lore and boss defeats.
+The expanded reader has 40 volumes: the original prologue, five acts, companion folios, six realm interludes, and twenty-seven additional canon folios. The new interludes deepen the psychological mystery around copied memories, unreliable records, the Quiet's borrowed voices, Iri/Auralis, and the Keepers' first failed attempt to protect the Lumen. Rust persists recovered notes and five side-chamber echoes in the campaign save. Existing saves are backfilled from their recorded boss defeats and discovered lore, so players do not need to reset their campaign. The Underlight gate is checked by the server and requires both collections: five hidden fragments and five optional story echoes.
 
 ## 10. The complete Moonwake epic
 
@@ -194,3 +195,15 @@ Story pickups in the live-world map now link to several relevant volumes instead
 The expansion preserves the three endings as mutually exclusive futures. The Shared Light distributes the Lumen among the kingdoms; the Quiet Keeper maintains a shared watch at the threshold; the Open Sky releases the Lumen into many small lights. The shared coda describes only what remains true across the alternatives and does not merge their events.
 
 The story remains original and non-graphic. Its psychological tension comes from copied voices, unreliable records, false certainty, conflicting memories, consent, grief, and the consequences of decisions made in the name of protection. The main campaign still has optional rooms and side stories; completion of the central five-act route does not require finding every hidden archive.
+
+
+## 11. Story-driven campaign progression
+
+The Moonwake manuscript now has direct gameplay consequences rather than remaining a separate reading archive:
+
+- Defeating each of the five central wardens records its canonical Lumen Note: Return, Hearth, Name, Distance, and Witness. The live-world status strip and Chronicle show which notes have been recovered.
+- Reading the lore memory in each optional side chamber records one of five story echoes. The five echoes and five hidden fragments are both required for the Rust API to open the Underlight; the client map and physical exit use the same condition.
+- Campaign saves created before this integration are migrated lazily. Rust rebuilds missing note and echo collections from the existing bossesDefeated and discoveredLore fields when a campaign is loaded.
+- Every companion thread has authored outcomes for both choices. Reopening the same character conversation shows the saved choice and its consequence, and the Threads panel links to the matching full Testament folio. Trust increases for completing a conversation, not for picking a supposedly correct answer.
+- Choosing an ending opens its full epilogue in the game. It also includes the player's recorded companion outcomes. Defeating the optional Underlight warden adds a short sixth-margin coda without merging or replacing the three separate endings.
+- The game UI and Chronicle read progression from the same server-owned campaign snapshot. The Rust API remains authoritative for boss rewards, collected story echoes, legacy-save migration, and Underlight access.

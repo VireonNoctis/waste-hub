@@ -13,6 +13,9 @@ import {
   LUNAR_ENDINGS,
   MOONWAKE_PROLOGUE,
   QUEST_CHOICES,
+  QUEST_THREADS,
+  LUMEN_NOTES,
+  STORY_ECHOES,
   WORLD_ROOMS,
   WORLD_ROOM_BY_ID,
 } from "@/lib/dungeons/campaign"
@@ -233,6 +236,7 @@ interface LiveSceneProps {
   abilities: string[]
   foundLore: string[]
   foundSecrets: string[]
+  underlightReady: boolean
   settings: AccessibilitySettings
   inputRef: MutableRefObject<InputState>
   paused: boolean
@@ -245,7 +249,7 @@ interface LiveSceneProps {
 }
 
 function LiveScene({
-  room, enemyEnabled, serverBossHp, abilities, foundLore, foundSecrets, settings, inputRef, paused,
+  room, enemyEnabled, serverBossHp, abilities, foundLore, foundSecrets, underlightReady, settings, inputRef, paused,
   onHud, onEvent, onRoomExit, onNpc, onCheckpoint, onRespawn,
 }: LiveSceneProps) {
   const playerRef = useRef<THREE.Group>(null)
@@ -526,9 +530,9 @@ function LiveScene({
         eventCooldown.current = 1
       } else if (nearbyExit) {
         const required = nearbyExit.ability
-        const allowed = !required || (required === "five-secrets" ? foundSecrets.length >= 5 : abilities.includes(required))
+        const allowed = !required || (required === "five-secrets" ? underlightReady : abilities.includes(required))
         if (allowed) onRoomExit(nearbyExit.target)
-        else prompt = required === "five-secrets" ? "Five hidden marks are needed" : "Sealed · requires " + required.replace("-", " ")
+        else prompt = required === "five-secrets" ? "Five hidden marks and five story echoes are needed" : "Sealed · requires " + required.replace("-", " ")
       }
     }
 
@@ -747,6 +751,7 @@ export default function DungeonLiveWorld() {
   const [showSettings, setShowSettings] = useState(false)
   const [remapping, setRemapping] = useState<Action | null>(null)
   const [endingChoice, setEndingChoice] = useState(false)
+  const [showEndingEpilogue, setShowEndingEpilogue] = useState(false)
   const [toast, setToast] = useState("")
   const [error, setError] = useState("")
   const [dialogueBusy, setDialogueBusy] = useState(false)
@@ -839,10 +844,12 @@ export default function DungeonLiveWorld() {
     try {
       const next = await applyEvent({ action, key })
       const bossWon = action === "boss-hit" && next.bossesDefeated.includes(key)
-      const copy = action === "lore" ? "Memory added to your Chronicle."
+      const echo = action === "lore" ? STORY_ECHOES.find((item) => item.lore === key) : undefined
+      const note = bossWon ? LUMEN_NOTES.find((item) => item.boss === key) : undefined
+      const copy = action === "lore" ? (echo ? "Story echo recovered: " + echo.title + "." : "Memory added to your Chronicle.")
         : action === "secret" ? "A hidden mark answers the lantern."
           : action === "bestiary" ? "Bestiary pattern recorded."
-            : bossWon ? "Warden defeated. A new movement art has awakened."
+            : bossWon ? (note ? note.title + " recovered. A new movement art has awakened." : "The sixth margin has been revealed beneath the observatory.")
               : "The warden's seal weakens. Keep reading its pattern."
       setToast(copy)
       if (action === "lore") {
@@ -907,7 +914,8 @@ export default function DungeonLiveWorld() {
     setDialogueBusy(true)
     try {
       await applyEvent({ action: "quest", key: dialogue.quest, value: choice })
-      setToast("The conversation is remembered.")
+      const thread = QUEST_THREADS[dialogue.quest]
+      setToast(thread?.outcomes[choice] ?? "The conversation is remembered.")
       setDialogue(null)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The conversation could not be saved.")
@@ -924,6 +932,7 @@ export default function DungeonLiveWorld() {
     try {
       await applyEvent({ action: "ending", value: ending })
       setEndingChoice(false)
+      setShowEndingEpilogue(true)
       setToast("Your ending has been written into the Moonwake Chronicle.")
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The ending could not be saved.")
@@ -975,10 +984,16 @@ export default function DungeonLiveWorld() {
   }
 
   const abilities = campaign?.unlockedAbilities ?? []
+  const recoveredNotes = campaign?.recoveredNotes ?? []
+  const storyEchoes = campaign?.storyEchoes ?? []
+  const underlightReady = (campaign?.discoveredSecrets.length ?? 0) >= 5
+    && STORY_ECHOES.every((echo) => storyEchoes.includes(echo.lore))
   const currentChapter = room.chapter > 0 ? CAMPAIGN_CHAPTERS[room.chapter - 1] : null
   const activeEnemy = room.enemy && !(campaign?.bossesDefeated.includes(room.enemy.id)) ? room.enemy : undefined
   const completedQuestCount = campaign?.completedQuests.length ?? 0
   const selectedEnding = LUNAR_ENDINGS.find((ending) => ending.id === campaign?.ending)
+  const activeThread = dialogue ? QUEST_THREADS[dialogue.quest] : null
+  const activeChoice = dialogue ? campaign?.questChoices[dialogue.quest] : undefined
 
   if (loading) {
     return <section className="ld-live-world"><div className="ld-live-loading">Opening the Moonwake observatory…</div></section>
@@ -997,6 +1012,7 @@ export default function DungeonLiveWorld() {
           <button onClick={() => setShowChronicle((value) => !value)} aria-expanded={showChronicle}><BookOpen size={15} /> Chronicle</button>
           <button onClick={() => setShowBestiary((value) => !value)} aria-expanded={showBestiary}><BookOpen size={15} /> Bestiary <span>{campaign?.bestiary.length ?? 0}</span></button>
           <button onClick={() => setShowQuests((value) => !value)} aria-expanded={showQuests}><Sparkles size={15} /> Threads <span>{completedQuestCount}/6</span></button>
+          {selectedEnding && <button onClick={() => setShowEndingEpilogue(true)}>Final Testament</button>}
           <button onClick={() => setShowSettings((value) => !value)} aria-expanded={showSettings} aria-label="Accessibility and controls"><Settings2 size={16} /></button>
         </div>
       </div>
@@ -1009,6 +1025,23 @@ export default function DungeonLiveWorld() {
           ))}
         </span>
       </div>
+      <div className="ld-live-story-progress">
+        <div>
+          <span className="ld-live-progress-label">LUMEN NOTES</span>
+          <div className="ld-live-note-row">
+            {LUMEN_NOTES.map((note) => (
+              <span key={note.id} className={recoveredNotes.includes(note.id) ? "is-recovered" : ""} title={note.meaning}>
+                {recoveredNotes.includes(note.id) ? "✦" : "◇"} {note.title}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div>
+          <span className="ld-live-progress-label">THE SIXTH MARGIN</span>
+          <p>{storyEchoes.length}/5 story echoes · {campaign?.discoveredSecrets.length ?? 0}/5 hidden marks</p>
+          <strong className={underlightReady ? "is-open" : ""}>{underlightReady ? "UNDERLIGHT OPEN" : "Five echoes and five hidden marks reveal the Underlight"}</strong>
+        </div>
+      </div>
 
       {error && <div className="ld-live-error" role="alert">{error}<button onClick={() => setError("")} aria-label="Dismiss"><X size={14} /></button></div>}
       {toast && <div className="ld-live-toast" role="status">{toast}<button onClick={() => setToast("")} aria-label="Dismiss"><X size={14} /></button></div>}
@@ -1016,16 +1049,16 @@ export default function DungeonLiveWorld() {
       {showMap && (
         <div className="ld-live-panel ld-live-world-map">
           <div className="ld-live-panel-head"><div><span>THE MOONWAKE ATLAS</span><h3>Every road remembers a way home.</h3></div><button onClick={() => setShowMap(false)} aria-label="Close world map"><X size={16} /></button></div>
-          <p className="ld-live-map-copy">The kingdoms form one connected descent. Only the passages beside your current room can be entered from here.</p>
+          <p className="ld-live-map-copy">The kingdoms form one connected descent. Only passages beside your current room can be entered. The Underlight needs all five hidden marks and all five optional story echoes.</p>
           <div className="ld-live-map-route">
             {WORLD_ROOMS.map((entry) => {
               const exit = room.exits.find((candidate) => candidate.target === entry.id)
-              const gateReady = !exit?.ability || (exit.ability === "five-secrets" ? (campaign?.discoveredSecrets.length ?? 0) >= 5 : abilities.includes(exit.ability))
+              const gateReady = !exit?.ability || (exit.ability === "five-secrets" ? underlightReady : abilities.includes(exit.ability))
               const isCurrent = entry.id === roomId
               const canTravel = !!exit && gateReady
               const cleared = entry.enemy?.kind === "boss" && !!campaign?.bossesDefeated.includes(entry.enemy.id)
               const visited = !!campaign?.visitedRooms.includes(entry.id)
-              const sealed = entry.region === "underlight" ? (campaign?.discoveredSecrets.length ?? 0) < 5
+              const sealed = entry.region === "underlight" ? !underlightReady
                 : entry.region === "ember" ? !campaign?.bossesDefeated.includes("verdant_colossus")
                   : entry.region === "frost" ? !campaign?.bossesDefeated.includes("ember_sovereign")
                     : entry.region === "astral" ? !campaign?.bossesDefeated.includes("hollow_monarch")
@@ -1091,13 +1124,19 @@ export default function DungeonLiveWorld() {
         <div className="ld-live-panel">
           <div className="ld-live-panel-head"><div><span>COMPANION THREADS</span><h3>Promises kept along the way</h3></div><button onClick={() => setShowQuests(false)} aria-label="Close threads"><X size={16} /></button></div>
           <div className="ld-live-quest-grid">
-            {Object.entries(QUEST_CHOICES).map(([key, choices]) => (
-              <article key={key} className={campaign?.completedQuests.includes(key) ? "is-done" : ""}>
-                <strong>{key.replaceAll("-", " ")}</strong>
-                <span>{campaign?.completedQuests.includes(key) ? "REMEMBERED" : "NOT YET SPOKEN"}</span>
-                <p>{campaign?.questChoices[key] ?? choices[0]}</p>
-              </article>
-            ))}
+            {Object.entries(QUEST_CHOICES).map(([key, choices]) => {
+              const thread = QUEST_THREADS[key]
+              const choice = campaign?.questChoices[key]
+              return (
+                <article key={key} className={campaign?.completedQuests.includes(key) ? "is-done" : ""}>
+                  <strong>{thread?.title ?? key.replaceAll("-", " ")}</strong>
+                  <span>{campaign?.completedQuests.includes(key) ? "REMEMBERED" : "NOT YET SPOKEN"}</span>
+                  <p>{thread?.summary}</p>
+                  {choice ? <blockquote>{thread?.outcomes[choice]}</blockquote> : <small>{choices.length} possible responses · waiting for your conversation</small>}
+                  {thread?.volume && <Link className="ld-live-thread-link" href={"/dungeons/story?volume=" + thread.volume}>Read the related folio ↗</Link>}
+                </article>
+              )
+            })}
           </div>
           <p className="ld-live-affinity">Companion trust · {campaign?.companionAffinity ?? 0} / 6</p>
         </div>
@@ -1150,6 +1189,7 @@ export default function DungeonLiveWorld() {
               abilities={abilities}
               foundLore={campaign?.discoveredLore ?? []}
               foundSecrets={campaign?.discoveredSecrets ?? []}
+              underlightReady={underlightReady}
               settings={settings}
               inputRef={inputRef}
               paused={!gameStarted || paused || !!dialogue || !!memory || !!milestoneStory || endingChoice || showSettings || showChronicle || showBestiary || showQuests || showMap}
@@ -1247,15 +1287,25 @@ export default function DungeonLiveWorld() {
         <div className="ld-live-modal-backdrop" role="presentation">
           <section className="ld-live-dialogue" role="dialog" aria-modal="true" aria-label={dialogue.name + " conversation"}>
             <div className="ld-live-panel-head"><div><span>{dialogue.role.toUpperCase()}</span><h3>{dialogue.name}</h3></div><button onClick={() => setDialogue(null)} aria-label="Close conversation"><X size={16} /></button></div>
+            <p>{activeThread?.summary}</p>
             <p>“{dialogue.line}”</p>
-            <div className="ld-live-dialogue-choices">
-              {(QUEST_CHOICES[dialogue.quest] ?? []).map((choice) => (
-                <button key={choice} disabled={dialogueBusy || !!campaign?.completedQuests.includes(dialogue.quest)} onClick={() => void saveQuest(choice)}>
-                  {choice}
-                </button>
-              ))}
-            </div>
-            {campaign?.completedQuests.includes(dialogue.quest) && <small>This promise is already held in the Chronicle.</small>}
+            {activeChoice ? (
+              <div className="ld-live-thread-resolution">
+                <span>YOUR REMEMBERED CHOICE</span>
+                <strong>{activeChoice}</strong>
+                <p>{activeThread?.outcomes[activeChoice]}</p>
+                <small>This conversation is part of your saved Chronicle.</small>
+              </div>
+            ) : (
+              <div className="ld-live-dialogue-choices">
+                {(QUEST_CHOICES[dialogue.quest] ?? []).map((choice) => (
+                  <button key={choice} disabled={dialogueBusy} onClick={() => void saveQuest(choice)}>
+                    {choice}
+                  </button>
+                ))}
+              </div>
+            )}
+            {activeThread?.volume && <Link className="ld-live-ending-option ld-live-story-link" href={"/dungeons/story?volume=" + activeThread.volume}>Read the full thread ↗</Link>}
           </section>
         </div>
       )}
@@ -1275,6 +1325,34 @@ export default function DungeonLiveWorld() {
                 ? "Iri stays beside the Wayfarer. The old observatory becomes a place they tend together, not a duty either must carry alone."
                 : "Iri leaves her lantern in the observatory window, then follows the moth-lights back into the kingdoms. The path between you remains open."}
             </p>
+          </section>
+        </div>
+      )}
+
+      {showEndingEpilogue && selectedEnding && campaign && (
+        <div className="ld-live-modal-backdrop" role="presentation">
+          <section className="ld-live-dialogue ld-live-final-testament" role="dialog" aria-modal="true" aria-label={selectedEnding.title}>
+            <div className="ld-live-panel-head">
+              <div><span>YOUR MOONWAKE ENDING</span><h3>{selectedEnding.title}</h3></div>
+              <button onClick={() => setShowEndingEpilogue(false)} aria-label="Close final testament"><X size={16} /></button>
+            </div>
+            <p>{selectedEnding.description}</p>
+            <blockquote>{selectedEnding.epilogue}</blockquote>
+            <div className="ld-live-ending-threads">
+              <span>THE PROMISES YOU CARRIED</span>
+              {Object.entries(campaign.questChoices).map(([key, choice]) => {
+                const thread = QUEST_THREADS[key]
+                return thread ? <article key={key}><strong>{thread.title}</strong><p>{thread.outcomes[choice]}</p></article> : null
+              })}
+              {Object.keys(campaign.questChoices).length === 0 && <p>No companion thread was chosen. Their doors remain open in the Chronicle.</p>}
+            </div>
+            {campaign.bossesDefeated.includes("eclipse_warden") && (
+              <div className="ld-live-margin-coda">
+                <span>THE SIXTH NOTE · THE MARGIN</span>
+                <p>The Underlight leaves one page unfilled. It does not change the future you chose; it preserves the freedom to make new choices after the last page.</p>
+              </div>
+            )}
+            <button className="ld-live-ending-option" onClick={() => setShowEndingEpilogue(false)}>Return to the world</button>
           </section>
         </div>
       )}

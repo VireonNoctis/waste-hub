@@ -499,3 +499,67 @@
 .ld-live-story-link:hover { color: #fff; text-decoration: none; }
 .ld-live-map-route button .ld-live-map-story-state { color: #8d9ab9; font: 700 6px ui-monospace, monospace; letter-spacing: .08em; }
 .ld-live-map-route button .ld-live-map-story-state.is-discovered { color: #b8e8d7; }
+
+/* Story progression is visible in the world, not only in the reader. */
+.ld-live-story-progress {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 12px;
+  margin: 9px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(170, 171, 220, .17);
+  background: linear-gradient(110deg, rgba(25, 29, 52, .88), rgba(16, 22, 39, .9));
+}
+.ld-live-progress-label, .ld-live-thread-resolution > span, .ld-live-ending-threads > span, .ld-live-margin-coda > span {
+  display: block;
+  margin-bottom: 7px;
+  color: #aaa6d1;
+  font: 800 7px/1.4 ui-monospace, monospace;
+  letter-spacing: .15em;
+}
+.ld-live-note-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.ld-live-note-row span {
+  padding: 5px 7px;
+  color: #777b9c;
+  border: 1px solid #343a5a;
+  background: #151a2d;
+  font: 800 8px ui-monospace, monospace;
+}
+.ld-live-note-row span.is-recovered { color: #f0dfb4; border-color: #927f58; background: #302a28; }
+.ld-live-story-progress p { margin: 0 0 5px; color: #bec0d8; font: 9px ui-monospace, monospace; }
+.ld-live-story-progress strong { color: #c7bfdc; font: 800 8px ui-monospace, monospace; letter-spacing: .08em; }
+.ld-live-story-progress strong.is-open { color: #bce3d4; }
+.ld-live-quest-grid article blockquote {
+  margin: 0;
+  padding: 7px 8px;
+  color: #d7d3ee;
+  border-left: 2px solid #978ebc;
+  background: rgba(177, 164, 221, .07);
+  font: 9px/1.55 ui-serif, Georgia, serif;
+}
+.ld-live-thread-link { color: #bcb4e9; font: 8px ui-monospace, monospace; text-decoration: none; }
+.ld-live-thread-link:hover { color: #f0eaff; }
+.ld-live-thread-resolution, .ld-live-ending-threads article, .ld-live-margin-coda {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(170, 171, 220, .2);
+  background: rgba(8, 12, 27, .58);
+}
+.ld-live-thread-resolution strong, .ld-live-ending-threads strong { color: #eeeaff; font: 800 10px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.ld-live-thread-resolution p, .ld-live-ending-threads p, .ld-live-margin-coda p { margin: 6px 0 0; color: #b8bdd5; font: 10px/1.65 ui-sans-serif, system-ui, sans-serif; }
+.ld-live-thread-resolution small { display: block; margin-top: 8px; color: #b7d9d1; font: 8px ui-monospace, monospace; }
+.ld-live-final-testament { width: min(680px, 100%); }
+.ld-live-final-testament > blockquote {
+  margin: 10px 0;
+  padding: 12px;
+  color: #e0dcef;
+  border-left: 2px solid #c1b8e8;
+  background: rgba(173, 166, 224, .08);
+  font: 11px/1.8 ui-serif, Georgia, serif;
+}
+.ld-live-ending-threads { margin-top: 12px; }
+.ld-live-ending-threads article { margin-top: 7px; }
+.ld-live-margin-coda { border-color: #8a79a9; background: rgba(66, 45, 80, .25); }
+@media (max-width: 760px) {
+  .ld-live-story-progress { grid-template-columns: 1fr; }
+}

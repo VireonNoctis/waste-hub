@@ -26,6 +26,8 @@ export interface CampaignSnapshot {
   completedQuests: string[]
   bossesDefeated: string[]
   questChoices: Record<string, string>
+  recoveredNotes: string[]
+  storyEchoes: string[]
   companionAffinity: number
   ending: string | null
   activeBoss: CampaignBoss | null
@@ -373,6 +375,55 @@ export const QUEST_CHOICES: Record<string, string[]> = {
   "the-blank-constellation": ["Leave the final star unmarked", "Draw a path for whoever comes next"],
   "a-name-for-the-light": ["Tell Iri the name Auralis", "Ask Iri to choose her own name"],
 }
+
+export const QUEST_THREADS: Record<string, {
+  title: string
+  companion: string
+  summary: string
+  volume: string
+  outcomes: Record<string, string>
+}> = {
+  "the-unlit-lantern": { title: "The Lantern Without a Flame", companion: "Iri", summary: "Iri is unsure whether the lantern was left as a welcome or a warning. Your answer changes how she carries that uncertainty.", volume: "auralis-before-iri", outcomes: {
+    "Trust Iri with the lantern": "Iri carries the lantern for a while. She does not suddenly remember everything, but she no longer has to approach the missing page alone.",
+    "Keep the lantern close for now": "You keep the lantern. Iri walks beside its light and is free to remember at her own pace.",
+  } },
+  "the-bell-kept-quiet": { title: "The Bell Kept Quiet", companion: "Iri", summary: "The Bell Garden holds a warning that was never meant to become an order. Decide whether it should remain rooted or travel with you.", volume: "five-wardens-five-wounds", outcomes: {
+    "Let the roots finish their warning": "The bell remains with the roots. Its note can be heard by anyone who pauses long enough to listen.",
+    "Carry the bell's note forward": "You carry a small echo of the bell. The warning becomes a reminder, not a command.",
+  } },
+  "a-hearth-for-two": { title: "A Hearth for Two", companion: "Vey", summary: "Vey has kept a place for someone whose name is missing. The promise can remain a welcome or become warmth shared across the whole city.", volume: "vey-last-promise", outcomes: {
+    "Keep the hearth for the unknown guest": "The empty chair stays by the fire as an open invitation to whoever needs it.",
+    "Give the ember back to the city": "Vey returns the ember to the public hearths. The warmth is shared widely, and no single chair has to carry the promise.",
+  } },
+  "the-name-without-ink": { title: "The Name Without Ink", companion: "Edda", summary: "Edda can speak beside you, or choose the moment herself. Either way, the name remains hers.", volume: "edda-unwritten-name", outcomes: {
+    "Speak Edda's name with her": "You speak together. Edda keeps the sound as a memory she may return to, never as a label she must keep.",
+    "Let Edda choose when to remember": "You leave the silence open. Edda decides when the name is ready to be spoken.",
+  } },
+  "the-blank-constellation": { title: "The Blank Constellation", companion: "Nym", summary: "Nym's final coordinate can remain blank or become an offered route. The map must never choose for the traveller.", volume: "nym-map-that-lied", outcomes: {
+    "Leave the final star unmarked": "The blank remains visible. The next traveller can decide where the path should lead.",
+    "Draw a path for whoever comes next": "Nym draws a dotted route and labels it an invitation. It offers help without claiming to know the destination.",
+  } },
+  "a-name-for-the-light": { title: "A Name for the Light", companion: "Iri", summary: "Auralis is part of Iri's past, but Iri is the person standing here now. Let her decide how those names belong together.", volume: "auralis-before-iri", outcomes: {
+    "Tell Iri the name Auralis": "You offer the name gently. Iri accepts it as a piece of her history, not a replacement for the life she has made.",
+    "Ask Iri to choose her own name": "Iri chooses what to carry and when. Auralis remains part of the story without taking Iri's present away.",
+  } },
+}
+
+export const LUMEN_NOTES = [
+  { id: "return", title: "Return", realm: "Mosslight", boss: "verdant_colossus", meaning: "A path kept open for someone who has not yet come home." },
+  { id: "hearth", title: "Hearth", realm: "Ember Hollow", boss: "ember_sovereign", meaning: "Warmth shared without asking anyone to become its fuel." },
+  { id: "name", title: "Name", realm: "Frostglass", boss: "hollow_monarch", meaning: "A name belongs to the person who carries it." },
+  { id: "distance", title: "Distance", realm: "Astral Archive", boss: "astral_warden", meaning: "A map may offer a direction without choosing a destination." },
+  { id: "witness", title: "Witness", realm: "Quiet Beyond", boss: "orin_first_keeper", meaning: "To see another person without claiming to own their story." },
+] as const
+
+export const STORY_ECHOES = [
+  { lore: "lore_orchard_unsent", title: "The Unsent Orchard", realm: "Mosslight", volume: "letters-small-map", meaning: "An unfinished letter can matter without becoming a command." },
+  { lore: "lore_foundry_voices", title: "The Voice Foundry", realm: "Ember Hollow", volume: "quiet-anatomy", meaning: "A familiar voice is not proof that a person has returned." },
+  { lore: "lore_catalogue_unborn", title: "The Unborn Catalogue", realm: "Frostglass", volume: "edda-unwritten-name", meaning: "A future must not be written before its owner arrives." },
+  { lore: "lore_observatory_inward", title: "The Inward Observatory", realm: "Astral Archive", volume: "nym-map-that-lied", meaning: "A blank coordinate can be a courtesy, not an error." },
+  { lore: "lore_corridor_returns", title: "The Returning Corridor", realm: "Quiet Beyond", volume: "auralis-before-iri", meaning: "Iri and Auralis can both be true without either erasing the other." },
+] as const
 
 export const BOSS_UNLOCKS: Record<string, string> = {
   verdant_colossus: "dash",
