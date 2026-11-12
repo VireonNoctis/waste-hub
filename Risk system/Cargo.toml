@@ -1,0 +1,10 @@
+[package]
+name = "lunarx-account-linkage"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.100"
+
+[dependencies]
+axum = "0.8.9"
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net"] }
